@@ -587,7 +587,7 @@ const startup = async ()=>{
         yourUrlHref.innerText = yourUrl;
         const profileNameInput = document.getElementById("profile_name");
         const profileAboutInput = document.getElementById("profile_about");
-        const profile = await (0, _profiles.getProfile)({
+        const profile = await (0, _profiles.subscribeAndGetProfile)({
             publicKey
         });
         profileNameInput.value = profile.name;

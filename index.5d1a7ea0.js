@@ -563,7 +563,7 @@ parcelHelpers.export(exports, "getPrivateKey", ()=>(0, _keys.getPrivateKey));
 parcelHelpers.export(exports, "getPublicKey", ()=>(0, _keys.getPublicKey));
 parcelHelpers.export(exports, "setPrivateKey", ()=>(0, _keys.setPrivateKey));
 parcelHelpers.export(exports, "createNote", ()=>(0, _notes.createNote));
-parcelHelpers.export(exports, "getProfile", ()=>(0, _profiles.getProfile));
+parcelHelpers.export(exports, "subscribeAndGetProfile", ()=>(0, _profiles.subscribeAndGetProfile));
 parcelHelpers.export(exports, "setProfile", ()=>(0, _profiles.setProfile));
 parcelHelpers.export(exports, "getRelays", ()=>(0, _relays.getRelays));
 parcelHelpers.export(exports, "setRelays", ()=>(0, _relays.setRelays));
@@ -575,57 +575,91 @@ var _profiles = require("./profiles");
 var _subscribe = require("./subscribe");
 (0, _relays.createRelays)();
 
-},{"./keys":"bYUmf","./notes":"hlkir","./profiles":"2Bolr","./relays":"le10m","./subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYUmf":[function(require,module,exports) {
+},{"./relays":"le10m","./keys":"bYUmf","./notes":"hlkir","./profiles":"2Bolr","./subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"le10m":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "getPrivateKey", ()=>getPrivateKey);
-parcelHelpers.export(exports, "getNsecPrivateKey", ()=>getNsecPrivateKey);
-parcelHelpers.export(exports, "hasPrivateKey", ()=>hasPrivateKey);
-parcelHelpers.export(exports, "getPublicKey", ()=>getPublicKey);
-parcelHelpers.export(exports, "getNpubPublicKey", ()=>getNpubPublicKey);
-parcelHelpers.export(exports, "setPrivateKey", ()=>setPrivateKey);
-parcelHelpers.export(exports, "createPrivateKey", ()=>createPrivateKey);
+parcelHelpers.export(exports, "getRelays", ()=>getRelays);
+parcelHelpers.export(exports, "hasRelays", ()=>hasRelays);
+parcelHelpers.export(exports, "setRelays", ()=>setRelays);
+parcelHelpers.export(exports, "_connectRelays", ()=>_connectRelays);
+parcelHelpers.export(exports, "_initRelays", ()=>_initRelays);
+parcelHelpers.export(exports, "_publish", ()=>_publish);
+parcelHelpers.export(exports, "_subscribe", ()=>_subscribe);
+parcelHelpers.export(exports, "createRelays", ()=>createRelays);
 var _nostrTools = require("nostr-tools");
 var _constants = require("../constants");
-const getPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const privateKeyMaybe = localStorage.getItem((0, _constants.PRIVATE_KEY_STORAGE_KEY));
-    if (privateKeyMaybe === null || privateKeyMaybe.length !== 64) throw new Error("#lvYBhM Cannot find private key");
-    return privateKeyMaybe;
-};
-const getNsecPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const privateKey = await getPrivateKey();
-    const nsecPrivateKey = (0, _nostrTools.nip19).nsecEncode(privateKey);
-    return nsecPrivateKey;
-};
-const hasPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+const relays = [];
+globalThis.relays = relays;
+const getRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const relaysJSONMaybe = localStorage.getItem((0, _constants.RELAYS_STORAGE_KEY));
+    if (relaysJSONMaybe === null || relaysJSONMaybe.length === 0) throw new Error("#we8Qt4 No relays configured");
     try {
-        await getPrivateKey();
-        return true;
-    } catch  {}
-    return false;
+        const relays = JSON.parse(relaysJSONMaybe);
+        if (!Array.isArray(relays)) throw new Error("#kSt3oN Relays is not an array of relays");
+        return relays;
+    } catch (error) {
+        console.error("#TKE6Vm Error during JSON.parse()", error);
+        throw error;
+    }
 };
-const getPublicKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const privateKey = await getPrivateKey({
-        localStorage
+const hasRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const relaysJson = localStorage.getItem((0, _constants.RELAYS_STORAGE_KEY));
+    if (relaysJson === null) return false;
+    try {
+        const relays = JSON.parse(relaysJson);
+        if (Array.isArray(relays)) return true;
+        return false;
+    } catch  {
+        return false;
+    }
+    return true;
+};
+const setRelays = async ({ relays , localStorage =globalThis.localStorage  })=>{
+    const relaysString = JSON.stringify(relays);
+    localStorage.setItem((0, _constants.RELAYS_STORAGE_KEY), relaysString);
+    return;
+};
+const _connectRelays = async ()=>{
+    const connectionPromises = relays.map((relay)=>relay.connect());
+    await Promise.all(connectionPromises);
+    return;
+};
+const _initRelays = async ({ urls =[]  } = {})=>{
+    // Ensure this is only invoked once
+    if (relays.length > 0) return;
+    // Use the result from `getRelays()` if `urls` is not provided
+    const realUrls = urls.length === 0 ? await getRelays() : urls;
+    realUrls.forEach((url)=>{
+        const relay = (0, _nostrTools.relayInit)(url);
+        relays.push(relay);
     });
-    const publicKey = (0, _nostrTools.getPublicKey)(privateKey);
-    return publicKey;
+    await _connectRelays();
 };
-const getNpubPublicKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const publicKey = await getPublicKey();
-    const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
-    return npubPublicKey;
-};
-const setPrivateKey = async ({ privateKey , localStorage =globalThis.localStorage  })=>{
-    if (privateKey.length !== 64) throw new Error("#irpzXh Private key is not 64 characters");
-    localStorage.setItem((0, _constants.PRIVATE_KEY_STORAGE_KEY), privateKey);
-};
-const createPrivateKey = async ()=>{
-    const privateKey = (0, _nostrTools.generatePrivateKey)();
-    await setPrivateKey({
-        privateKey
+const _publish = (event)=>{
+    const publishPromises = relays.map((relay)=>{
+        return new Promise((resolve, reject)=>{
+            const pub = relay.publish(event);
+            pub.on("ok", ()=>resolve());
+            pub.on("failed", (reason)=>reject(`${relay.url} - ${reason}`));
+        });
     });
-    return privateKey;
+    return publishPromises;
+};
+const _subscribe = ({ filters , onEvent  })=>{
+    const subscriptions = relays.map((relay)=>new Promise((resolve, reject)=>{
+            const subscription = relay.sub(filters);
+            subscription.on("event", onEvent);
+            subscription.on("eose", ()=>{
+                resolve(subscription);
+            });
+        }));
+    return subscriptions;
+};
+const createRelays = async ()=>{
+    const relaysInstalled = await hasRelays();
+    if (!relaysInstalled) await setRelays({
+        relays: (0, _constants.DEFAULT_RELAYS)
+    });
 };
 
 },{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9f1gR":[function(require,module,exports) {
@@ -7192,11 +7226,63 @@ const MAP_NOTE_KIND = 397;
 const DEFAULT_RELAYS = [
     "wss://nostr.massmux.com",
     "wss://public.nostr.swissrouting.com",
-    "wss://relay.stoner.com",
     "wss://nostr.slothy.win"
 ];
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hlkir":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYUmf":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "getPrivateKey", ()=>getPrivateKey);
+parcelHelpers.export(exports, "getNsecPrivateKey", ()=>getNsecPrivateKey);
+parcelHelpers.export(exports, "hasPrivateKey", ()=>hasPrivateKey);
+parcelHelpers.export(exports, "getPublicKey", ()=>getPublicKey);
+parcelHelpers.export(exports, "getNpubPublicKey", ()=>getNpubPublicKey);
+parcelHelpers.export(exports, "setPrivateKey", ()=>setPrivateKey);
+parcelHelpers.export(exports, "createPrivateKey", ()=>createPrivateKey);
+var _nostrTools = require("nostr-tools");
+var _constants = require("../constants");
+const getPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const privateKeyMaybe = localStorage.getItem((0, _constants.PRIVATE_KEY_STORAGE_KEY));
+    if (privateKeyMaybe === null || privateKeyMaybe.length !== 64) throw new Error("#lvYBhM Cannot find private key");
+    return privateKeyMaybe;
+};
+const getNsecPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const privateKey = await getPrivateKey();
+    const nsecPrivateKey = (0, _nostrTools.nip19).nsecEncode(privateKey);
+    return nsecPrivateKey;
+};
+const hasPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    try {
+        await getPrivateKey();
+        return true;
+    } catch  {}
+    return false;
+};
+const getPublicKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const privateKey = await getPrivateKey({
+        localStorage
+    });
+    const publicKey = (0, _nostrTools.getPublicKey)(privateKey);
+    return publicKey;
+};
+const getNpubPublicKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const publicKey = await getPublicKey();
+    const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
+    return npubPublicKey;
+};
+const setPrivateKey = async ({ privateKey , localStorage =globalThis.localStorage  })=>{
+    if (privateKey.length !== 64) throw new Error("#irpzXh Private key is not 64 characters");
+    localStorage.setItem((0, _constants.PRIVATE_KEY_STORAGE_KEY), privateKey);
+};
+const createPrivateKey = async ()=>{
+    const privateKey = (0, _nostrTools.generatePrivateKey)();
+    await setPrivateKey({
+        privateKey
+    });
+    return privateKey;
+};
+
+},{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hlkir":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "createNote", ()=>createNote);
@@ -7225,94 +7311,7 @@ const createNote = async ({ content , plusCode , privateKey  })=>{
 };
 globalThis.createNote = createNote;
 
-},{"../constants":"45DZp","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"le10m":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "getRelays", ()=>getRelays);
-parcelHelpers.export(exports, "hasRelays", ()=>hasRelays);
-parcelHelpers.export(exports, "setRelays", ()=>setRelays);
-parcelHelpers.export(exports, "_connectRelays", ()=>_connectRelays);
-parcelHelpers.export(exports, "_initRelays", ()=>_initRelays);
-parcelHelpers.export(exports, "_publish", ()=>_publish);
-parcelHelpers.export(exports, "_subscribe", ()=>_subscribe);
-parcelHelpers.export(exports, "createRelays", ()=>createRelays);
-var _nostrTools = require("nostr-tools");
-var _constants = require("../constants");
-const relays = [];
-globalThis.relays = relays;
-const getRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const relaysJSONMaybe = localStorage.getItem((0, _constants.RELAYS_STORAGE_KEY));
-    if (relaysJSONMaybe === null || relaysJSONMaybe.length === 0) throw new Error("#we8Qt4 No relays configured");
-    try {
-        const relays = JSON.parse(relaysJSONMaybe);
-        if (!Array.isArray(relays)) throw new Error("#kSt3oN Relays is not an array of relays");
-        return relays;
-    } catch (error) {
-        console.error("#TKE6Vm Error during JSON.parse()", error);
-        throw error;
-    }
-};
-const hasRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const relaysJson = localStorage.getItem((0, _constants.RELAYS_STORAGE_KEY));
-    if (relaysJson === null) return false;
-    try {
-        const relays = JSON.parse(relaysJson);
-        if (Array.isArray(relays)) return true;
-        return false;
-    } catch  {
-        return false;
-    }
-    return true;
-};
-const setRelays = async ({ relays , localStorage =globalThis.localStorage  })=>{
-    const relaysString = JSON.stringify(relays);
-    localStorage.setItem((0, _constants.RELAYS_STORAGE_KEY), relaysString);
-    return;
-};
-const _connectRelays = async ()=>{
-    const connectionPromises = relays.map((relay)=>relay.connect());
-    await Promise.all(connectionPromises);
-    return;
-};
-const _initRelays = async ({ urls =[]  } = {})=>{
-    // Ensure this is only invoked once
-    if (relays.length > 0) return;
-    // Use the result from `getRelays()` if `urls` is not provided
-    const realUrls = urls.length === 0 ? await getRelays() : urls;
-    realUrls.forEach((url)=>{
-        const relay = (0, _nostrTools.relayInit)(url);
-        relays.push(relay);
-    });
-    await _connectRelays();
-};
-const _publish = (event)=>{
-    const publishPromises = relays.map((relay)=>{
-        return new Promise((resolve, reject)=>{
-            const pub = relay.publish(event);
-            pub.on("ok", ()=>resolve());
-            pub.on("failed", (reason)=>reject(reason));
-        });
-    });
-    return publishPromises;
-};
-const _subscribe = ({ filters , onEvent  })=>{
-    const subscriptions = relays.map((relay)=>new Promise((resolve, reject)=>{
-            const subscription = relay.sub(filters);
-            subscription.on("event", onEvent);
-            subscription.on("eose", ()=>{
-                resolve(subscription);
-            });
-        }));
-    return subscriptions;
-};
-const createRelays = async ()=>{
-    const relaysInstalled = await hasRelays();
-    if (!relaysInstalled) await setRelays({
-        relays: (0, _constants.DEFAULT_RELAYS)
-    });
-};
-
-},{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fcvaj":[function(require,module,exports) {
+},{"../constants":"45DZp","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fcvaj":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "dateToUnix", ()=>dateToUnix);
@@ -7389,7 +7388,7 @@ const uniq = (input)=>{
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "setProfile", ()=>setProfile);
-parcelHelpers.export(exports, "getProfile", ()=>getProfile);
+parcelHelpers.export(exports, "subscribeAndGetProfile", ()=>subscribeAndGetProfile);
 var _nostrTools = require("nostr-tools");
 var _keys = require("./keys");
 var _relays = require("./relays");
@@ -7420,7 +7419,7 @@ const setProfile = async ({ name , about , privateKey , localStorage  })=>{
         throw error;
     }
 };
-const getProfile = async ({ publicKey  })=>{
+const subscribeAndGetProfile = async ({ publicKey  })=>{
     return new Promise((resolve, reject)=>{
         const subscriptions = (0, _relays._subscribe)({
             filters: [
@@ -7447,11 +7446,16 @@ const getProfile = async ({ publicKey  })=>{
             }
         });
         // Timeout after 2s. This is a no-op if the promise already resolved above.
-        setTimeout(reject, 2e3);
+        setTimeout(()=>{
+            resolve({
+                publicKey,
+                name: "",
+                about: "",
+                picture: ""
+            });
+        }, 2e3);
     });
 };
-globalThis.setProfile = setProfile;
-globalThis.getProfile = getProfile;
 
 },{"nostr-tools":"9f1gR","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"b20xP":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");

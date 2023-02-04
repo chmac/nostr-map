@@ -571,12 +571,10 @@ const map = (0, _leafletDefault.default).map("map").setView([
     51.505,
     -0.09
 ], 11);
+// this lets us add multiple notes to a single area
+const plusCodesWithPopupsAndNotes = {};
 (0, _leafletDefault.default).tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-}).addTo(map);
-(0, _leafletDefault.default).tileLayer("https://grid.plus.codes/grid/tms/{z}/{x}/{y}.png", {
-    tms: true,
-    attribution: "grid by plus codes"
 }).addTo(map);
 // NOTE: The leaflet sidepanel plugin doesn't have types in `@types/leaflet` and
 // so we need to cast to any here.
@@ -603,6 +601,11 @@ map.on("contextmenu", (event)=>{
         longitude: event.latlng.lng
     };
     const plusCode = (0, _pluscodes.encode)(coords, 6);
+    const selectedPlusCodePoly = generatePolygonFromPlusCode(plusCode);
+    selectedPlusCodePoly.setStyle({
+        color: "grey"
+    });
+    selectedPlusCodePoly.addTo(map);
     (0, _keys.hasPrivateKey)().then((isLoggedIn)=>{
         if (!isLoggedIn) {
             hackSidePanelOpen();
@@ -614,11 +617,11 @@ map.on("contextmenu", (event)=>{
                 plusCode
             });
         };
-        (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(createPopupHtml(createNoteCallback)).openOn(map);
+        (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(createPopupHtml(createNoteCallback)).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
     });
 });
-function addNoteToMap(note) {
-    const decoded = (0, _pluscodes.decode)(note.plusCode);
+function generatePolygonFromPlusCode(plusCode) {
+    const decoded = (0, _pluscodes.decode)(plusCode);
     const { resolution: res , longitude: cLong , latitude: cLat  } = decoded;
     const latlngs = [
         (0, _leafletDefault.default).latLng(cLat + res / 2, cLong + res / 2),
@@ -626,10 +629,42 @@ function addNoteToMap(note) {
         (0, _leafletDefault.default).latLng(cLat - res / 2, cLong - res / 2),
         (0, _leafletDefault.default).latLng(cLat + res / 2, cLong - res / 2)
     ];
-    const poly = (0, _leafletDefault.default).polygon(latlngs).addTo(map);
-    const content = `${note.content} – by ${note.authorName}`;
-    poly.bindPopup(content);
-    poly.on("click", ()=>poly.openPopup());
+    const poly = (0, _leafletDefault.default).polygon(latlngs);
+    return poly;
+}
+function generateContentFromNotes(notes) {
+    let content = "";
+    for (let note of notes)content += `${note.content} – by <a href="#${note.authorPublicKey}">${note.authorName || note.authorPublicKey.substring(0, 5) + "..."}</a><br>`;
+    return content;
+}
+function addNoteToMap(note) {
+    let existing = plusCodesWithPopupsAndNotes[note.plusCode];
+    if (existing) {
+        const popup = existing.popup;
+        const notes = [
+            ...existing.notes,
+            note
+        ];
+        popup.setContent(generateContentFromNotes(notes));
+    } else {
+        const poly = generatePolygonFromPlusCode(note.plusCode);
+        poly.setStyle({
+            color: "blue"
+        });
+        poly.addTo(map);
+        const content = generateContentFromNotes([
+            note
+        ]);
+        const popup = (0, _leafletDefault.default).popup().setContent(content);
+        poly.bindPopup(popup);
+        poly.on("click", ()=>poly.openPopup());
+        plusCodesWithPopupsAndNotes[note.plusCode] = {
+            popup,
+            notes: [
+                note
+            ]
+        };
+    }
 }
 function createPopupHtml(createNoteCallback) {
     const popupContainer = document.createElement("div");
