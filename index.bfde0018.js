@@ -626,7 +626,6 @@ map.on("contextmenu", async (event)=>{
     (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(popupContent).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
     // There's a weirdness on Safari on iOS where long pressing the map selects
     // text, this is an attempt at a workaround
-    document.getElementById("content_submit")?.focus();
     document.getElementById("content")?.focus();
 });
 function generatePolygonFromPlusCode(plusCode) {
