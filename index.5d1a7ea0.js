@@ -7508,6 +7508,7 @@ const eventToNote = ({ event , profiles  })=>{
 const subscribe = async ({ publicKey , onNoteReceived , limit =200  })=>{
     console.log("#qnvvsm nostr/subscribe", publicKey);
     let gotNotesEose = false;
+    let gotPromiseEose = false;
     const profiles = {};
     const getEventsForSpecificAuthor = typeof publicKey !== "undefined";
     const eventsBaseFilter = {
@@ -7525,10 +7526,10 @@ const subscribe = async ({ publicKey , onNoteReceived , limit =200  })=>{
         ...eventsFilter,
         limit
     };
-    const noteEvents = [];
+    const noteEventsQueue = [];
     const onNoteEvent = (event)=>{
-        if (!gotNotesEose) {
-            noteEvents.push(event);
+        if (!gotNotesEose || !gotPromiseEose) {
+            noteEventsQueue.push(event);
             return;
         }
         const note = eventToNote({
@@ -7545,7 +7546,7 @@ const subscribe = async ({ publicKey , onNoteReceived , limit =200  })=>{
     });
     await Promise.race(noteSubscriptions);
     gotNotesEose = true;
-    const authorsWithDuplicates = noteEvents.map((event)=>(0, _utils.getPublicKeyFromEvent)({
+    const authorsWithDuplicates = noteEventsQueue.map((event)=>(0, _utils.getPublicKeyFromEvent)({
             event
         }));
     const authors = (0, _utils.uniq)(authorsWithDuplicates);
@@ -7572,9 +7573,10 @@ const subscribe = async ({ publicKey , onNoteReceived , limit =200  })=>{
         onEvent: onProfileEvent
     });
     await Promise.race(profileSubscriptions);
+    gotPromiseEose = true;
     // NOTE: At this point we should have fetched all the stored events, and all
     // the profiles of the authors of all of those events
-    const notes = noteEvents.map((event)=>eventToNote({
+    const notes = noteEventsQueue.map((event)=>eventToNote({
             event,
             profiles
         }));
