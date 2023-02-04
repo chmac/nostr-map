@@ -594,8 +594,13 @@ const hackSidePanelClosed = ()=>{
     (0, _leafletDefault.default).DomUtil.removeClass(panel, "opened");
     (0, _leafletDefault.default).DomUtil.addClass(panel, "closed");
 };
-map.on("contextmenu", (event)=>{
+map.on("contextmenu", async (event)=>{
     console.log("#bG7CWu Right clicked or long pressed");
+    const isLoggedIn = await (0, _keys.hasPrivateKey)();
+    if (!isLoggedIn) {
+        hackSidePanelOpen();
+        return;
+    }
     const coords = {
         latitude: event.latlng.lat,
         longitude: event.latlng.lng
@@ -606,19 +611,13 @@ map.on("contextmenu", (event)=>{
         color: "grey"
     });
     selectedPlusCodePoly.addTo(map);
-    (0, _keys.hasPrivateKey)().then((isLoggedIn)=>{
-        if (!isLoggedIn) {
-            hackSidePanelOpen();
-            return;
-        }
-        const createNoteCallback = async (content)=>{
-            (0, _notes.createNote)({
-                content,
-                plusCode
-            });
-        };
-        (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(createPopupHtml(createNoteCallback)).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
-    });
+    const createNoteCallback = async (content)=>{
+        (0, _notes.createNote)({
+            content,
+            plusCode
+        });
+    };
+    (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(createPopupHtml(createNoteCallback)).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
 });
 function generatePolygonFromPlusCode(plusCode) {
     const decoded = (0, _pluscodes.decode)(plusCode);
@@ -632,9 +631,18 @@ function generatePolygonFromPlusCode(plusCode) {
     const poly = (0, _leafletDefault.default).polygon(latlngs);
     return poly;
 }
+// TODO - Can we restart our code instead of reloading the whole window?
+globalThis.addEventListener("popstate", (event)=>{
+    globalThis.document.location.reload();
+});
 function generateContentFromNotes(notes) {
     let content = "";
-    for (let note of notes)content += `${note.content} – by <a href="#${note.authorPublicKey}">${note.authorName || note.authorPublicKey.substring(0, 5) + "..."}</a><br>`;
+    for (const note of notes){
+        const url = (0, _router.getUrlFromNpubPublicKey)({
+            npubPublicKey: note.authorNpubPublicKey
+        });
+        content += `${note.content} – by <a href="${url}">${note.authorName || note.authorPublicKey.substring(0, 5) + "..."}</a><br>`;
+    }
     return content;
 }
 function addNoteToMap(note) {

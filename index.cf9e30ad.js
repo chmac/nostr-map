@@ -575,10 +575,10 @@ const startup = async ()=>{
         const publicKey = await (0, _keys.getPublicKey)();
         const npubPublicKey = await (0, _keys.getNpubPublicKey)();
         const nsecPrivateKey = await (0, _keys.getNsecPrivateKey)();
-        const publicKeySpan = globalThis.document.getElementById("npubPublicKey");
-        publicKeySpan.innerText = npubPublicKey;
-        const nsecPrivateKeySpan = globalThis.document.getElementById("nsecPrivateKey");
-        nsecPrivateKeySpan.innerText = nsecPrivateKey;
+        const publicKeyCode = globalThis.document.getElementById("npubPublicKey");
+        publicKeyCode.innerText = npubPublicKey;
+        const nsecPrivateKeyCode = globalThis.document.getElementById("nsecPrivateKey");
+        nsecPrivateKeyCode.innerText = nsecPrivateKey;
         const yourUrl = (0, _router.getUrlFromNpubPublicKey)({
             npubPublicKey
         });

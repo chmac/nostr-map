@@ -581,7 +581,6 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getRelays", ()=>getRelays);
 parcelHelpers.export(exports, "hasRelays", ()=>hasRelays);
 parcelHelpers.export(exports, "setRelays", ()=>setRelays);
-parcelHelpers.export(exports, "_connectRelays", ()=>_connectRelays);
 parcelHelpers.export(exports, "_initRelays", ()=>_initRelays);
 parcelHelpers.export(exports, "_publish", ()=>_publish);
 parcelHelpers.export(exports, "_subscribe", ()=>_subscribe);
@@ -619,21 +618,26 @@ const setRelays = async ({ relays , localStorage =globalThis.localStorage  })=>{
     localStorage.setItem((0, _constants.RELAYS_STORAGE_KEY), relaysString);
     return;
 };
-const _connectRelays = async ()=>{
-    const connectionPromises = relays.map((relay)=>relay.connect());
-    await Promise.all(connectionPromises);
-    return;
-};
 const _initRelays = async ({ urls =[]  } = {})=>{
     // Ensure this is only invoked once
     if (relays.length > 0) return;
     // Use the result from `getRelays()` if `urls` is not provided
     const realUrls = urls.length === 0 ? await getRelays() : urls;
-    realUrls.forEach((url)=>{
+    const connectionPromises = realUrls.map(async (url)=>{
         const relay = (0, _nostrTools.relayInit)(url);
+        try {
+            await relay.connect();
+        } catch (error) {
+            console.error("#b9aLfB Connecting to relay failed", relay.url, error);
+            return;
+        }
         relays.push(relay);
     });
-    await _connectRelays();
+    await Promise.all(connectionPromises);
+    if (relays.length === 0) {
+        console.error("#qDRSs5 All relays failed to connect");
+        globalThis.alert("Error: All relays failed to connect. Please wait a minute and reload.");
+    }
 };
 const _publish = (event)=>{
     const publishPromises = relays.map((relay)=>{
@@ -7337,11 +7341,13 @@ const getProfileFromEvent = ({ event  })=>{
     const publicKey = getPublicKeyFromEvent({
         event
     });
+    const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
     try {
         const profile = JSON.parse(profileJson);
         return {
             ...profile,
-            publicKey
+            publicKey,
+            npubPublicKey
         };
     } catch (e) {
         const message = "#j2o1vH Failed to get profile from event";
@@ -7421,6 +7427,7 @@ const setProfile = async ({ name , about , privateKey , localStorage  })=>{
 };
 const subscribeAndGetProfile = async ({ publicKey  })=>{
     return new Promise((resolve, reject)=>{
+        const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
         const subscriptions = (0, _relays._subscribe)({
             filters: [
                 {
@@ -7449,6 +7456,7 @@ const subscribeAndGetProfile = async ({ publicKey  })=>{
         setTimeout(()=>{
             resolve({
                 publicKey,
+                npubPublicKey,
                 name: "",
                 about: "",
                 picture: ""
@@ -7477,9 +7485,11 @@ const eventToNoteMinusProfile = ({ event  })=>{
     const publicKey = (0, _utils.getPublicKeyFromEvent)({
         event
     });
+    const authorNpubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
     const { content  } = event;
     return {
         authorPublicKey: publicKey,
+        authorNpubPublicKey,
         content,
         plusCode
     };
