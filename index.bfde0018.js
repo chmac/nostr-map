@@ -660,7 +660,7 @@ const mapStartup = async ()=>{
 };
 mapStartup();
 
-},{"leaflet":"iFbO2","leaflet.sidepanel":"hLCFx","pluscodes":"3cWkS","./nostr/keys":"bYUmf","./nostr/notes":"hlkir","./nostr/relays":"le10m","./nostr/subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./router":"4QFWt"}],"iFbO2":[function(require,module,exports) {
+},{"leaflet":"iFbO2","leaflet.sidepanel":"hLCFx","pluscodes":"3cWkS","./nostr/keys":"bYUmf","./nostr/notes":"hlkir","./nostr/relays":"le10m","./nostr/subscribe":"b20xP","./router":"4QFWt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iFbO2":[function(require,module,exports) {
 /* @preserve
  * Leaflet 1.9.3, a JS library for interactive maps. https://leafletjs.com
  * (c) 2010-2022 Vladimir Agafonkin, (c) 2010-2011 CloudMade
@@ -11541,6 +11541,6 @@ const getUrlFromNpubPublicKey = ({ npubPublicKey , location =globalThis.document
     return yourUrl;
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","nostr-tools":"9f1gR"}]},["dMFKV","f3qN5"], "f3qN5", "parcelRequire31ee")
+},{"nostr-tools":"9f1gR","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["dMFKV","f3qN5"], "f3qN5", "parcelRequire31ee")
 
 //# sourceMappingURL=index.bfde0018.js.map

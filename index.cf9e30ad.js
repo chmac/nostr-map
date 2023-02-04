@@ -574,8 +574,11 @@ const startup = async ()=>{
         _leaflet.DomUtil.addClass(loggedOut, "hide");
         const publicKey = await (0, _keys.getPublicKey)();
         const npubPublicKey = await (0, _keys.getNpubPublicKey)();
-        const publicKeySpan = globalThis.document.getElementById("publicKey");
+        const nsecPrivateKey = await (0, _keys.getNsecPrivateKey)();
+        const publicKeySpan = globalThis.document.getElementById("npubPublicKey");
         publicKeySpan.innerText = npubPublicKey;
+        const nsecPrivateKeySpan = globalThis.document.getElementById("nsecPrivateKey");
+        nsecPrivateKeySpan.innerText = nsecPrivateKey;
         const yourUrl = (0, _router.getUrlFromNpubPublicKey)({
             npubPublicKey
         });
@@ -675,6 +678,6 @@ const startup = async ()=>{
 };
 startup();
 
-},{"leaflet":"iFbO2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./nostr":"hEBz2","./router":"4QFWt"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
+},{"leaflet":"iFbO2","./nostr":"hEBz2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","./router":"4QFWt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
 
 //# sourceMappingURL=index.cf9e30ad.js.map

@@ -16,7 +16,7 @@ html, body, #map {
   display: block;
 }
 
-#publicKey, #yourUrl {
+#npubPublicKey, #nsecPrivateKey, #yourUrl {
   word-break: break-all;
 }
 
