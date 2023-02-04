@@ -564,8 +564,10 @@ var _leaflet = require("leaflet");
 var _nostr = require("./nostr");
 var _keys = require("./nostr/keys");
 var _profiles = require("./nostr/profiles");
+var _relays = require("./nostr/relays");
 var _router = require("./router");
 const startup = async ()=>{
+    await (0, _relays.createRelays)();
     const isLoggedIn = await (0, _keys.hasPrivateKey)();
     const loggedIn = _leaflet.DomUtil.get("loggedIn");
     const loggedOut = _leaflet.DomUtil.get("loggedOut");
@@ -610,33 +612,6 @@ const startup = async ()=>{
                 profileSubmitButton.removeAttribute("disabled");
             }
         };
-        const relaysInput = document.getElementById("relays");
-        (0, _nostr.getRelays)().then((relays)=>{
-            const relaysJson = JSON.stringify(relays);
-            relaysInput.value = relaysJson;
-        });
-        const relaySubmitButton = document.getElementById("relays_submit");
-        relaySubmitButton.onclick = async (event)=>{
-            event.preventDefault();
-            relaySubmitButton.setAttribute("disabled", "disabled");
-            const relaysJson = relaysInput.value;
-            try {
-                const relays = JSON.parse(relaysJson);
-                if (!Array.isArray(relays) || relays.length === 0) {
-                    relaySubmitButton.removeAttribute("disabled");
-                    globalThis.alert("Invalid relays submitted. Please try again.");
-                    return;
-                }
-                await (0, _nostr.setRelays)({
-                    relays
-                });
-                globalThis.alert("Relays saved.");
-                globalThis.document.location.reload();
-            } catch (error) {
-                relaySubmitButton.removeAttribute("disabled");
-                globalThis.alert(`#vRuf1N Error saving relays\n${error.toString()}`);
-            }
-        };
     } else {
         _leaflet.DomUtil.addClass(loggedIn, "hide");
         _leaflet.DomUtil.addClass(loggedOut, "show");
@@ -647,7 +622,7 @@ const startup = async ()=>{
             const name = document.getElementById("signup_name").value;
             const about = document.getElementById("signup_about").value;
             try {
-                await (0, _nostr.createNostrAccount)();
+                await (0, _keys.createPrivateKey)();
                 (0, _profiles.setProfile)({
                     name,
                     about
@@ -675,9 +650,35 @@ const startup = async ()=>{
             }
         };
     }
+    const relaysInput = document.getElementById("relays");
+    const relays = await (0, _nostr.getRelays)();
+    const relaysJson = JSON.stringify(relays);
+    relaysInput.value = relaysJson;
+    const relaySubmitButton = document.getElementById("relays_submit");
+    relaySubmitButton.onclick = async (event)=>{
+        event.preventDefault();
+        relaySubmitButton.setAttribute("disabled", "disabled");
+        const relaysJson = relaysInput.value;
+        try {
+            const relays = JSON.parse(relaysJson);
+            if (!Array.isArray(relays) || relays.length === 0) {
+                relaySubmitButton.removeAttribute("disabled");
+                globalThis.alert("Invalid relays submitted. Please try again.");
+                return;
+            }
+            await (0, _nostr.setRelays)({
+                relays
+            });
+            globalThis.alert("Relays saved.");
+            globalThis.document.location.reload();
+        } catch (error) {
+            relaySubmitButton.removeAttribute("disabled");
+            globalThis.alert(`#vRuf1N Error saving relays\n${error.toString()}`);
+        }
+    };
 };
 startup();
 
-},{"leaflet":"iFbO2","./nostr":"hEBz2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","./router":"4QFWt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
+},{"leaflet":"iFbO2","./nostr":"hEBz2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","./router":"4QFWt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./nostr/relays":"le10m"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
 
 //# sourceMappingURL=index.cf9e30ad.js.map
