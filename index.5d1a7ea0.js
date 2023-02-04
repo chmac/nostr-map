@@ -7481,9 +7481,10 @@ var _constants = require("../constants");
 var _relays = require("./relays");
 var _utils = require("./utils");
 const eventToNoteMinusProfile = ({ event  })=>{
+    const { id , kind , content  } = event;
     // NOTE: We need to cast `note.kind` here because the `NostrEvent` type has a
     // enum for Kinds, which doesn't include our custom kind.
-    if (event.kind !== (0, _constants.MAP_NOTE_KIND)) throw new Error("#w27ijD Cannot convert event of wrong kind to note");
+    if (kind !== (0, _constants.MAP_NOTE_KIND)) throw new Error("#w27ijD Cannot convert event of wrong kind to note");
     const plusCode = (0, _utils.getTagFirstValueFromEvent)({
         event,
         tag: (0, _constants.PLUS_CODE_TAG_KEY)
@@ -7493,8 +7494,8 @@ const eventToNoteMinusProfile = ({ event  })=>{
         event
     });
     const authorNpubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
-    const { content  } = event;
     return {
+        id,
         authorPublicKey: publicKey,
         authorNpubPublicKey,
         content,
