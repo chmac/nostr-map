@@ -624,6 +624,10 @@ map.on("contextmenu", async (event)=>{
         publicKey: myPublicKey
     })}">your own map</a> to add notes.`;
     (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(popupContent).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
+    // There's a weirdness on Safari on iOS where long pressing the map selects
+    // text, this is an attempt at a workaround
+    document.getElementById("content_submit")?.focus();
+    document.getElementById("content")?.focus();
 });
 function generatePolygonFromPlusCode(plusCode) {
     const decoded = (0, _pluscodes.decode)(plusCode);
@@ -693,6 +697,7 @@ function createPopupHtml(createNoteCallback) {
     contentInput.required = true;
     contentInput.placeholder = "What do you want to say about this area?";
     const submitButton = document.createElement("button");
+    submitButton.id = "content_submit";
     submitButton.innerText = "Add Note!";
     submitButton.onclick = ()=>{
         const content = contentInput.value;
