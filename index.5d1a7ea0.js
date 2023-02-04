@@ -589,6 +589,7 @@ var _nostrTools = require("nostr-tools");
 var _constants = require("../constants");
 const relays = [];
 globalThis.relays = relays;
+let connectedPromise;
 const getRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
     const relaysJSONMaybe = localStorage.getItem((0, _constants.RELAYS_STORAGE_KEY));
     if (relaysJSONMaybe === null || relaysJSONMaybe.length === 0) throw new Error("#we8Qt4 No relays configured");
@@ -619,6 +620,10 @@ const setRelays = async ({ relays , localStorage =globalThis.localStorage  })=>{
     return;
 };
 const _initRelays = async ({ urls =[]  } = {})=>{
+    if (typeof connectedPromise !== "undefined") // NOTE: We need to cast here because TypeScript doesn't know if this will
+    // be an array or a single void and so it complains. In reality, we don't
+    // care, we just want to await this promise and ignore it's output.
+    return connectedPromise;
     // Ensure this is only invoked once
     if (relays.length > 0) return;
     // Use the result from `getRelays()` if `urls` is not provided
@@ -633,7 +638,8 @@ const _initRelays = async ({ urls =[]  } = {})=>{
         }
         relays.push(relay);
     });
-    await Promise.all(connectionPromises);
+    connectedPromise = Promise.all(connectionPromises);
+    await connectedPromise;
     if (relays.length === 0) {
         console.error("#qDRSs5 All relays failed to connect");
         globalThis.alert("Error: All relays failed to connect. Please wait a minute and reload.");
@@ -649,7 +655,8 @@ const _publish = (event)=>{
     });
     return publishPromises;
 };
-const _subscribe = ({ filters , onEvent  })=>{
+const _subscribe = async ({ filters , onEvent  })=>{
+    await _initRelays();
     const subscriptions = relays.map((relay)=>new Promise((resolve, reject)=>{
             const subscription = relay.sub(filters);
             subscription.on("event", onEvent);
@@ -7427,7 +7434,6 @@ const setProfile = async ({ name , about , privateKey , localStorage  })=>{
 };
 const subscribeAndGetProfile = async ({ publicKey  })=>{
     return new Promise((resolve, reject)=>{
-        const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
         const subscriptions = (0, _relays._subscribe)({
             filters: [
                 {
@@ -7454,6 +7460,7 @@ const subscribeAndGetProfile = async ({ publicKey  })=>{
         });
         // Timeout after 2s. This is a no-op if the promise already resolved above.
         setTimeout(()=>{
+            const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
             resolve({
                 publicKey,
                 npubPublicKey,
@@ -7544,7 +7551,7 @@ const subscribe = async ({ publicKey , onNoteReceived , limit =200  })=>{
         ],
         onEvent: onNoteEvent
     });
-    await Promise.race(noteSubscriptions);
+    await Promise.race(await noteSubscriptions);
     gotNotesEose = true;
     const authorsWithDuplicates = noteEventsQueue.map((event)=>(0, _utils.getPublicKeyFromEvent)({
             event
@@ -7572,7 +7579,7 @@ const subscribe = async ({ publicKey , onNoteReceived , limit =200  })=>{
         ],
         onEvent: onProfileEvent
     });
-    await Promise.race(profileSubscriptions);
+    await Promise.race(await profileSubscriptions);
     gotPromiseEose = true;
     // NOTE: At this point we should have fetched all the stored events, and all
     // the profiles of the authors of all of those events
