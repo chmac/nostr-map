@@ -606,6 +606,9 @@ map.on("contextmenu", async (event)=>{
         longitude: event.latlng.lng
     };
     const plusCode = (0, _pluscodes.encode)(coords, 6);
+    const viewingCurrentPublicKey = (0, _router.getPublicKeyFromUrl)();
+    const myPublicKey = await (0, _keys.getPublicKey)();
+    const viewingMyOwnMap = typeof viewingCurrentPublicKey === "undefined" || viewingCurrentPublicKey === myPublicKey;
     const selectedPlusCodePoly = generatePolygonFromPlusCode(plusCode);
     selectedPlusCodePoly.setStyle({
         color: "grey"
@@ -617,7 +620,10 @@ map.on("contextmenu", async (event)=>{
             plusCode
         });
     };
-    (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(createPopupHtml(createNoteCallback)).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
+    const popupContent = viewingMyOwnMap ? createPopupHtml(createNoteCallback) : `View <a href="${(0, _router.getUrlFromPublickey)({
+        publicKey: myPublicKey
+    })}">your own map</a> to add notes.`;
+    (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(popupContent).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
 });
 function generatePolygonFromPlusCode(plusCode) {
     const decoded = (0, _pluscodes.decode)(plusCode);
@@ -11572,6 +11578,7 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getPublicKeyFromUrl", ()=>getPublicKeyFromUrl);
 parcelHelpers.export(exports, "getUrlFromNpubPublicKey", ()=>getUrlFromNpubPublicKey);
+parcelHelpers.export(exports, "getUrlFromPublickey", ()=>getUrlFromPublickey);
 var _nostrTools = require("nostr-tools");
 const getPublicKeyFromUrl = ({ location =globalThis.document.location  } = {})=>{
     const { hash  } = location;
@@ -11585,6 +11592,13 @@ const getPublicKeyFromUrl = ({ location =globalThis.document.location  } = {})=>
 const getUrlFromNpubPublicKey = ({ npubPublicKey , location =globalThis.document.location  })=>{
     const { origin , pathname  } = location;
     const yourUrl = origin + pathname + "#" + npubPublicKey;
+    return yourUrl;
+};
+const getUrlFromPublickey = ({ publicKey , location =globalThis.document.location  })=>{
+    const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
+    const yourUrl = getUrlFromNpubPublicKey({
+        npubPublicKey
+    });
     return yourUrl;
 };
 
