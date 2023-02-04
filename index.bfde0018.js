@@ -566,6 +566,7 @@ var _keys = require("./nostr/keys");
 var _notes = require("./nostr/notes");
 var _relays = require("./nostr/relays");
 var _subscribe = require("./nostr/subscribe");
+var _router = require("./router");
 const map = (0, _leafletDefault.default).map("map").setView([
     51.505,
     -0.09
@@ -649,14 +650,8 @@ function createPopupHtml(createNoteCallback) {
     popupContainer.appendChild(submitButton);
     return popupContainer;
 }
-const getPublicKeyFromUrl = ()=>{
-    const hash = document.location.hash;
-    if (hash.length !== 65) return;
-    // NOTE: The hash will include the leading # so we trim off the first character
-    return hash.slice(1);
-};
 const mapStartup = async ()=>{
-    const publicKey = getPublicKeyFromUrl();
+    const publicKey = (0, _router.getPublicKeyFromUrl)();
     await (0, _relays._initRelays)();
     (0, _subscribe.subscribe)({
         publicKey,
@@ -665,7 +660,7 @@ const mapStartup = async ()=>{
 };
 mapStartup();
 
-},{"leaflet":"iFbO2","leaflet.sidepanel":"hLCFx","pluscodes":"3cWkS","./nostr/keys":"bYUmf","./nostr/notes":"hlkir","./nostr/relays":"le10m","./nostr/subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iFbO2":[function(require,module,exports) {
+},{"leaflet":"iFbO2","leaflet.sidepanel":"hLCFx","pluscodes":"3cWkS","./nostr/keys":"bYUmf","./nostr/notes":"hlkir","./nostr/relays":"le10m","./nostr/subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./router":"4QFWt"}],"iFbO2":[function(require,module,exports) {
 /* @preserve
  * Leaflet 1.9.3, a JS library for interactive maps. https://leafletjs.com
  * (c) 2010-2022 Vladimir Agafonkin, (c) 2010-2011 CloudMade
@@ -11525,6 +11520,27 @@ const shorten = (code, ref)=>{
 };
 exports.default = shorten;
 
-},{"5ee48150aa75586":"gZcrH"}]},["dMFKV","f3qN5"], "f3qN5", "parcelRequire31ee")
+},{"5ee48150aa75586":"gZcrH"}],"4QFWt":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "getPublicKeyFromUrl", ()=>getPublicKeyFromUrl);
+parcelHelpers.export(exports, "getUrlFromNpubPublicKey", ()=>getUrlFromNpubPublicKey);
+var _nostrTools = require("nostr-tools");
+const getPublicKeyFromUrl = ({ location =globalThis.document.location  } = {})=>{
+    const { hash  } = location;
+    if (!hash.startsWith("#npub")) return;
+    // NOTE: The hash will include the leading # so we trim off the first character
+    const npubPublicKey = hash.slice(1);
+    const { type , data  } = (0, _nostrTools.nip19).decode(npubPublicKey);
+    if (type !== "npub") return;
+    return data;
+};
+const getUrlFromNpubPublicKey = ({ npubPublicKey , location =globalThis.document.location  })=>{
+    const { origin , pathname  } = location;
+    const yourUrl = origin + pathname + "#" + npubPublicKey;
+    return yourUrl;
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","nostr-tools":"9f1gR"}]},["dMFKV","f3qN5"], "f3qN5", "parcelRequire31ee")
 
 //# sourceMappingURL=index.bfde0018.js.map

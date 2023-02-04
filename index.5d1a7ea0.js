@@ -568,26 +568,38 @@ parcelHelpers.export(exports, "setProfile", ()=>(0, _profiles.setProfile));
 parcelHelpers.export(exports, "getRelays", ()=>(0, _relays.getRelays));
 parcelHelpers.export(exports, "setRelays", ()=>(0, _relays.setRelays));
 parcelHelpers.export(exports, "subscribe", ()=>(0, _subscribe.subscribe));
+parcelHelpers.export(exports, "createNostrAccount", ()=>createNostrAccount);
 var _keys = require("./keys");
+var _relays = require("./relays");
 var _notes = require("./notes");
 var _profiles = require("./profiles");
-var _relays = require("./relays");
 var _subscribe = require("./subscribe");
+const createNostrAccount = async ()=>{
+    await (0, _keys._createPrivateKey)();
+    await (0, _relays._createRelays)();
+};
 
 },{"./keys":"bYUmf","./notes":"hlkir","./profiles":"2Bolr","./relays":"le10m","./subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYUmf":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getPrivateKey", ()=>getPrivateKey);
+parcelHelpers.export(exports, "getNsecPrivateKey", ()=>getNsecPrivateKey);
 parcelHelpers.export(exports, "hasPrivateKey", ()=>hasPrivateKey);
 parcelHelpers.export(exports, "getPublicKey", ()=>getPublicKey);
+parcelHelpers.export(exports, "getNpubPublicKey", ()=>getNpubPublicKey);
 parcelHelpers.export(exports, "setPrivateKey", ()=>setPrivateKey);
-parcelHelpers.export(exports, "createPrivateKey", ()=>createPrivateKey);
+parcelHelpers.export(exports, "_createPrivateKey", ()=>_createPrivateKey);
 var _nostrTools = require("nostr-tools");
 var _constants = require("../constants");
 const getPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
     const privateKeyMaybe = localStorage.getItem((0, _constants.PRIVATE_KEY_STORAGE_KEY));
     if (privateKeyMaybe === null || privateKeyMaybe.length !== 64) throw new Error("#lvYBhM Cannot find private key");
     return privateKeyMaybe;
+};
+const getNsecPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const privateKey = await getPrivateKey();
+    const nsecPrivateKey = (0, _nostrTools.nip19).nsecEncode(privateKey);
+    return nsecPrivateKey;
 };
 const hasPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
     try {
@@ -603,11 +615,16 @@ const getPublicKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
     const publicKey = (0, _nostrTools.getPublicKey)(privateKey);
     return publicKey;
 };
+const getNpubPublicKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const publicKey = await getPublicKey();
+    const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
+    return npubPublicKey;
+};
 const setPrivateKey = async ({ privateKey , localStorage =globalThis.localStorage  })=>{
     if (privateKey.length !== 64) throw new Error("#irpzXh Private key is not 64 characters");
     localStorage.setItem((0, _constants.PRIVATE_KEY_STORAGE_KEY), privateKey);
 };
-const createPrivateKey = async ()=>{
+const _createPrivateKey = async ()=>{
     const privateKey = (0, _nostrTools.generatePrivateKey)();
     await setPrivateKey({
         privateKey
@@ -7171,10 +7188,17 @@ parcelHelpers.export(exports, "PRIVATE_KEY_STORAGE_KEY", ()=>PRIVATE_KEY_STORAGE
 parcelHelpers.export(exports, "RELAYS_STORAGE_KEY", ()=>RELAYS_STORAGE_KEY);
 parcelHelpers.export(exports, "PLUS_CODE_TAG_KEY", ()=>PLUS_CODE_TAG_KEY);
 parcelHelpers.export(exports, "MAP_NOTE_KIND", ()=>MAP_NOTE_KIND);
+parcelHelpers.export(exports, "DEFAULT_RELAYS", ()=>DEFAULT_RELAYS);
 const PRIVATE_KEY_STORAGE_KEY = "__nostrPrivateKey";
 const RELAYS_STORAGE_KEY = "__nostrRelays";
 const PLUS_CODE_TAG_KEY = "l";
 const MAP_NOTE_KIND = 397;
+const DEFAULT_RELAYS = [
+    "wss://nostr.massmux.com",
+    "wss://public.nostr.swissrouting.com",
+    "wss://relay.stoner.com",
+    "wss://nostr.slothy.win"
+];
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hlkir":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -7214,6 +7238,7 @@ parcelHelpers.export(exports, "_connectRelays", ()=>_connectRelays);
 parcelHelpers.export(exports, "_initRelays", ()=>_initRelays);
 parcelHelpers.export(exports, "_publish", ()=>_publish);
 parcelHelpers.export(exports, "_subscribe", ()=>_subscribe);
+parcelHelpers.export(exports, "_createRelays", ()=>_createRelays);
 var _nostrTools = require("nostr-tools");
 var _constants = require("../constants");
 const relays = [];
@@ -7271,8 +7296,11 @@ const _subscribe = ({ filters , onEvent  })=>{
         }));
     return subscriptions;
 };
-globalThis.getRelays = getRelays;
-globalThis.setRelays = setRelays;
+const _createRelays = async ()=>{
+    await setRelays({
+        relays: (0, _constants.DEFAULT_RELAYS)
+    });
+};
 
 },{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fcvaj":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -7373,14 +7401,13 @@ const setProfile = async ({ name , about , privateKey , localStorage  })=>{
         unsignedEvent,
         privateKey: key
     });
-    // TODO - We should probably await here so that this only resolves after successfully publishing the event
     try {
         const publishPromises = (0, _relays._publish)(signedEvent);
         await Promise.all(publishPromises);
     } catch (error) {
         const message = "#mkox3R Error saving profile";
         console.error(message, error);
-        globalThis.alert("There was an error saving your profile. Please try again. #sbX20d");
+        throw error;
     }
 };
 const getProfile = async ({ publicKey  })=>{

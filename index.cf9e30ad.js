@@ -561,8 +561,10 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "startup", ()=>startup);
 var _leaflet = require("leaflet");
+var _nostr = require("./nostr");
 var _keys = require("./nostr/keys");
 var _profiles = require("./nostr/profiles");
+var _router = require("./router");
 const startup = async ()=>{
     const isLoggedIn = await (0, _keys.hasPrivateKey)();
     const loggedIn = _leaflet.DomUtil.get("loggedIn");
@@ -571,23 +573,78 @@ const startup = async ()=>{
         _leaflet.DomUtil.addClass(loggedIn, "show");
         _leaflet.DomUtil.addClass(loggedOut, "hide");
         const publicKey = await (0, _keys.getPublicKey)();
+        const npubPublicKey = await (0, _keys.getNpubPublicKey)();
         const publicKeySpan = globalThis.document.getElementById("publicKey");
-        publicKeySpan.innerText = publicKey;
-        const { origin , pathname  } = globalThis.document.location;
-        const yourUrl = origin + pathname + "#" + publicKey;
+        publicKeySpan.innerText = npubPublicKey;
+        const yourUrl = (0, _router.getUrlFromNpubPublicKey)({
+            npubPublicKey
+        });
         const yourUrlHref = globalThis.document.getElementById("yourUrl");
         yourUrlHref.href = yourUrl;
         yourUrlHref.innerText = yourUrl;
+        const profileNameInput = document.getElementById("profile_name");
+        const profileAboutInput = document.getElementById("profile_about");
+        const profile = await (0, _profiles.getProfile)({
+            publicKey
+        });
+        profileNameInput.value = profile.name;
+        profileAboutInput.value = profile.about;
+        const profileSubmitButton = document.getElementById("profile_submit");
+        profileSubmitButton.onclick = async (event)=>{
+            event.preventDefault();
+            profileSubmitButton.setAttribute("disabled", "disabled");
+            const name = profileNameInput.value;
+            const about = profileAboutInput.value;
+            try {
+                await (0, _profiles.setProfile)({
+                    name,
+                    about
+                });
+                globalThis.alert("Your profile was updated.");
+                globalThis.document.location.reload();
+            } catch  {
+                globalThis.alert("There was an error. Please try again.");
+                profileSubmitButton.removeAttribute("disabled");
+            }
+        };
+        const relaysInput = document.getElementById("relays");
+        (0, _nostr.getRelays)().then((relays)=>{
+            const relaysJson = JSON.stringify(relays);
+            relaysInput.value = relaysJson;
+        });
+        const relaySubmitButton = document.getElementById("relays_submit");
+        relaySubmitButton.onclick = async (event)=>{
+            event.preventDefault();
+            relaySubmitButton.setAttribute("disabled", "disabled");
+            const relaysJson = relaysInput.value;
+            try {
+                const relays = JSON.parse(relaysJson);
+                if (!Array.isArray(relays) || relays.length === 0) {
+                    relaySubmitButton.removeAttribute("disabled");
+                    globalThis.alert("Invalid relays submitted. Please try again.");
+                    return;
+                }
+                await (0, _nostr.setRelays)({
+                    relays
+                });
+                globalThis.alert("Relays saved.");
+                globalThis.document.location.reload();
+            } catch (error) {
+                relaySubmitButton.removeAttribute("disabled");
+                globalThis.alert(`#vRuf1N Error saving relays\n${error.toString()}`);
+            }
+        };
     } else {
         _leaflet.DomUtil.addClass(loggedIn, "hide");
         _leaflet.DomUtil.addClass(loggedOut, "show");
         const signupSubmit = document.getElementById("signup_submit");
-        signupSubmit.onclick = (event)=>{
+        signupSubmit.onclick = async (event)=>{
             event.preventDefault();
             signupSubmit.setAttribute("disabled", "disabled");
             const name = document.getElementById("signup_name").value;
             const about = document.getElementById("signup_about").value;
-            (0, _keys.createPrivateKey)().then(()=>{
+            try {
+                await (0, _nostr.createNostrAccount)();
                 (0, _profiles.setProfile)({
                     name,
                     about
@@ -595,28 +652,29 @@ const startup = async ()=>{
                     globalThis.alert("Your account was created.");
                     globalThis.document.location.reload();
                 });
-            }).catch(()=>{
+            } catch  {
                 signinSubmit.removeAttribute("disabled");
-            });
+            }
         };
         const signinSubmit = document.getElementById("signin_submit");
-        signinSubmit.onclick = (event)=>{
+        signinSubmit.onclick = async (event)=>{
             event.preventDefault();
             signupSubmit.setAttribute("disabled", "disabled");
             const privateKey = document.getElementById("signin_privateKey").value;
-            (0, _keys.setPrivateKey)({
-                privateKey
-            }).then(()=>{
+            try {
+                (0, _keys.setPrivateKey)({
+                    privateKey
+                });
                 globalThis.alert("You were signed in successfully.");
                 globalThis.document.location.reload();
-            }).catch(()=>{
+            } catch  {
                 signinSubmit.removeAttribute("disabled");
-            });
+            }
         };
     }
 };
 startup();
 
-},{"leaflet":"iFbO2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
+},{"leaflet":"iFbO2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./nostr":"hEBz2","./router":"4QFWt"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
 
 //# sourceMappingURL=index.cf9e30ad.js.map
