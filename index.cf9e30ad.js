@@ -617,6 +617,6 @@ const startup = async ()=>{
 };
 startup();
 
-},{"leaflet":"iFbO2","./nostr/keys":"bYUmf","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./nostr/profiles":"2Bolr"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
+},{"leaflet":"iFbO2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
 
 //# sourceMappingURL=index.cf9e30ad.js.map

@@ -562,6 +562,7 @@ var _leaflet = require("leaflet");
 var _leafletDefault = parcelHelpers.interopDefault(_leaflet);
 var _leafletSidepanel = require("leaflet.sidepanel");
 var _pluscodes = require("pluscodes");
+var _keys = require("./nostr/keys");
 var _notes = require("./nostr/notes");
 var _relays = require("./nostr/relays");
 var _subscribe = require("./nostr/subscribe");
@@ -601,14 +602,19 @@ map.on("contextmenu", (event)=>{
         longitude: event.latlng.lng
     };
     const plusCode = (0, _pluscodes.encode)(coords, 6);
-    const createNoteCallback = (content)=>{
-        // this is where we'd send back to Nostr the event
-        (0, _notes.createNote)({
-            content,
-            plusCode
-        });
-    };
-    (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(createPopupHtml(createNoteCallback)).openOn(map);
+    (0, _keys.hasPrivateKey)().then((isLoggedIn)=>{
+        if (!isLoggedIn) {
+            hackSidePanelOpen();
+            return;
+        }
+        const createNoteCallback = async (content)=>{
+            (0, _notes.createNote)({
+                content,
+                plusCode
+            });
+        };
+        (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(createPopupHtml(createNoteCallback)).openOn(map);
+    });
 });
 function addNoteToMap(note) {
     const decoded = (0, _pluscodes.decode)(note.plusCode);
@@ -659,240 +665,7 @@ const mapStartup = async ()=>{
 };
 mapStartup();
 
-},{"pluscodes":"3cWkS","leaflet":"iFbO2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","leaflet.sidepanel":"hLCFx","./nostr/notes":"hlkir","./nostr/subscribe":"b20xP","./nostr/relays":"le10m"}],"3cWkS":[function(require,module,exports) {
-"use strict";
-var __importDefault = this && this.__importDefault || function(mod) {
-    return mod && mod.__esModule ? mod : {
-        "default": mod
-    };
-};
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.shorten = exports.expand = exports.decode = exports.encode = void 0;
-var encode_1 = require("2a0bc8bd1ac73321");
-Object.defineProperty(exports, "encode", {
-    enumerable: true,
-    get: function() {
-        return __importDefault(encode_1).default;
-    }
-});
-var decode_1 = require("7d3f2da98b11d866");
-Object.defineProperty(exports, "decode", {
-    enumerable: true,
-    get: function() {
-        return __importDefault(decode_1).default;
-    }
-});
-var expand_1 = require("997f0f4b84985282");
-Object.defineProperty(exports, "expand", {
-    enumerable: true,
-    get: function() {
-        return __importDefault(expand_1).default;
-    }
-});
-var shorten_1 = require("3c1528a6af170158");
-Object.defineProperty(exports, "shorten", {
-    enumerable: true,
-    get: function() {
-        return __importDefault(shorten_1).default;
-    }
-});
-
-},{"2a0bc8bd1ac73321":"gVXJz","7d3f2da98b11d866":"5IKvh","997f0f4b84985282":"gZcrH","3c1528a6af170158":"lzy3A"}],"gVXJz":[function(require,module,exports) {
-"use strict";
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-const utils_1 = require("ad0ec43ba6c511cf");
-const digitReducer = ({ value , result , posValue  })=>{
-    const q = Math.floor(value / posValue);
-    return {
-        value: value - q * posValue,
-        posValue: posValue / 20,
-        result: [
-            ...result,
-            utils_1.valueToDigit(q)
-        ]
-    };
-};
-const encodeAxis = (length, value)=>utils_1.arrayOf(length, null).reduce(digitReducer, {
-        value,
-        posValue: 20,
-        result: []
-    }).result;
-const interleave = (length)=>(xs, ys)=>{
-        const zipped = utils_1.zip(xs, ys);
-        const padding = length > 8 ? [] : utils_1.arrayOf(8 - length, "0");
-        const digits = [
-            ...utils_1.flatten(zipped),
-            ...padding
-        ];
-        return [
-            ...digits.slice(0, 8),
-            "+",
-            ...digits.slice(8)
-        ].join("");
-    };
-const normalizeLatitude = (lat)=>Math.min(180, Math.max(0, lat + 90));
-const normalizeLongitude = (lon)=>(lon + 180) % 360;
-const encode = (coordinates, length = 10)=>{
-    if (length < 2 || length > 10 || length % 2 !== 0) return null;
-    if (!utils_1.isValidCoordinates(coordinates)) return null;
-    const latitude = normalizeLatitude(utils_1.parseNum(coordinates.latitude));
-    const longitude = normalizeLongitude(utils_1.parseNum(coordinates.longitude));
-    return interleave(length)(encodeAxis(length / 2, latitude), encodeAxis(length / 2, longitude));
-};
-exports.default = encode;
-
-},{"ad0ec43ba6c511cf":"2kxY1"}],"2kxY1":[function(require,module,exports) {
-"use strict";
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.zip = exports.flatten = exports.arrayOf = exports.parseNum = exports.valueToDigit = exports.digitToValue = exports.isValidCode = exports.isValidCoordinates = void 0;
-const digits = "23456789CFGHJMPQRVWX";
-const pair = `[${digits}]{2}`;
-const pairOrZero = `([${digits}]|0){2}`;
-const regexp = `^${pair}(${pairOrZero}){0,3}[+](${pair})?$`;
-const isValidCoordinates = (subject)=>{
-    if (subject == null || typeof subject !== "object") return false;
-    return "longitude" in subject && "latitude" in subject;
-};
-exports.isValidCoordinates = isValidCoordinates;
-const isValidCode = (subject)=>typeof subject === "string" && Boolean(subject.match(regexp));
-exports.isValidCode = isValidCode;
-const digitToValue = (x)=>digits.indexOf(x);
-exports.digitToValue = digitToValue;
-const valueToDigit = (x)=>digits.charAt(x);
-exports.valueToDigit = valueToDigit;
-const parseNum = (value)=>typeof value === "string" ? parseFloat(value) : value;
-exports.parseNum = parseNum;
-const arrayOf = (count, fill)=>{
-    const result = [];
-    for(let i = 0; i < count; i++)result.push(fill);
-    return result;
-};
-exports.arrayOf = arrayOf;
-const flatten = (a)=>a.reduce((acc, val)=>acc.concat(val), []);
-exports.flatten = flatten;
-const zip = (a, b)=>a.map((e, i)=>[
-            e,
-            b[i]
-        ]);
-exports.zip = zip;
-
-},{}],"5IKvh":[function(require,module,exports) {
-"use strict";
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-const utils_1 = require("1168f333cc50be78");
-const axisReducer = ({ result , posValue  }, value)=>({
-        result: result + posValue * (value === -1 ? 0 : value),
-        posValue: posValue / 20
-    });
-const decodeAxis = (axis)=>axis.map(utils_1.digitToValue).reduce(axisReducer, {
-        result: 0,
-        posValue: 20
-    }).result;
-const resolution = (code)=>{
-    const length = code.replace(/[+0]/g, "").length / 2;
-    return 20 / Math.pow(20, length - 1);
-};
-const decode = (code)=>{
-    if (!utils_1.isValidCode(code)) return null;
-    const res = resolution(code);
-    const [lat, lon] = code.replace(/[+]/g, "").split("").reduce((arrs, digit, idx)=>idx % 2 === 0 ? [
-            [
-                ...arrs[0],
-                digit
-            ],
-            arrs[1]
-        ] : [
-            arrs[0],
-            [
-                ...arrs[1],
-                digit
-            ]
-        ], [
-        [],
-        []
-    ]).map(decodeAxis).map((axis)=>axis + res / 2);
-    return {
-        latitude: parseFloat((lat - 90).toFixed(6)),
-        longitude: parseFloat((lon - 180).toFixed(6)),
-        resolution: res
-    };
-};
-exports.default = decode;
-
-},{"1168f333cc50be78":"2kxY1"}],"gZcrH":[function(require,module,exports) {
-"use strict";
-var __importDefault = this && this.__importDefault || function(mod) {
-    return mod && mod.__esModule ? mod : {
-        "default": mod
-    };
-};
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-const encode_1 = __importDefault(require("9e731fe6ace0f8b7"));
-const decode_1 = __importDefault(require("592b44acecd1599c"));
-const utils_1 = require("35d129010b727d97");
-const adjust = (axis, refAxis, resolution)=>{
-    const refFloat = utils_1.parseNum(refAxis);
-    if (axis > refFloat + resolution / 2) return axis - resolution;
-    if (axis < refFloat - resolution / 2) return axis + resolution;
-    return axis;
-};
-const expand = (shortCode, ref)=>{
-    if (!utils_1.isValidCode(shortCode)) return null;
-    if (!utils_1.isValidCoordinates(ref)) return null;
-    const prefixLength = 11 - shortCode.length;
-    if (prefixLength === 0) return shortCode;
-    const prefixedCode = encode_1.default(ref, prefixLength);
-    if (!prefixedCode) return null;
-    const code = `${prefixedCode.slice(0, prefixLength)}${shortCode}`;
-    const coords = decode_1.default(code);
-    if (!coords) return null;
-    const { latitude , longitude  } = coords;
-    const resolution = Math.pow(20, 2 - prefixLength / 2);
-    return encode_1.default({
-        latitude: adjust(latitude, ref.latitude, resolution),
-        longitude: adjust(longitude, ref.longitude, resolution)
-    });
-};
-exports.default = expand;
-
-},{"9e731fe6ace0f8b7":"gVXJz","592b44acecd1599c":"5IKvh","35d129010b727d97":"2kxY1"}],"lzy3A":[function(require,module,exports) {
-"use strict";
-var __importDefault = this && this.__importDefault || function(mod) {
-    return mod && mod.__esModule ? mod : {
-        "default": mod
-    };
-};
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-const expand_1 = __importDefault(require("5ee48150aa75586"));
-const isValid = (subject)=>typeof subject === "string";
-const shortenReducer = (fullCode, ref)=>(code, length)=>{
-        const shortCode = fullCode.slice(10 - length);
-        return expand_1.default(shortCode, ref) === fullCode ? shortCode : code;
-    };
-const shorten = (code, ref)=>{
-    if (!isValid(code)) return null;
-    return [
-        10,
-        8,
-        6,
-        4
-    ].reduce(shortenReducer(code, ref), null);
-};
-exports.default = shorten;
-
-},{"5ee48150aa75586":"gZcrH"}],"iFbO2":[function(require,module,exports) {
+},{"leaflet":"iFbO2","leaflet.sidepanel":"hLCFx","pluscodes":"3cWkS","./nostr/keys":"bYUmf","./nostr/notes":"hlkir","./nostr/relays":"le10m","./nostr/subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iFbO2":[function(require,module,exports) {
 /* @preserve
  * Leaflet 1.9.3, a JS library for interactive maps. https://leafletjs.com
  * (c) 2010-2022 Vladimir Agafonkin, (c) 2010-2011 CloudMade
@@ -11519,6 +11292,239 @@ L.control.sidepanel = function(id, options) {
     return new L.Control.SidePanel(id, options);
 };
 
-},{}]},["dMFKV","f3qN5"], "f3qN5", "parcelRequire31ee")
+},{}],"3cWkS":[function(require,module,exports) {
+"use strict";
+var __importDefault = this && this.__importDefault || function(mod) {
+    return mod && mod.__esModule ? mod : {
+        "default": mod
+    };
+};
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.shorten = exports.expand = exports.decode = exports.encode = void 0;
+var encode_1 = require("2a0bc8bd1ac73321");
+Object.defineProperty(exports, "encode", {
+    enumerable: true,
+    get: function() {
+        return __importDefault(encode_1).default;
+    }
+});
+var decode_1 = require("7d3f2da98b11d866");
+Object.defineProperty(exports, "decode", {
+    enumerable: true,
+    get: function() {
+        return __importDefault(decode_1).default;
+    }
+});
+var expand_1 = require("997f0f4b84985282");
+Object.defineProperty(exports, "expand", {
+    enumerable: true,
+    get: function() {
+        return __importDefault(expand_1).default;
+    }
+});
+var shorten_1 = require("3c1528a6af170158");
+Object.defineProperty(exports, "shorten", {
+    enumerable: true,
+    get: function() {
+        return __importDefault(shorten_1).default;
+    }
+});
+
+},{"2a0bc8bd1ac73321":"gVXJz","7d3f2da98b11d866":"5IKvh","997f0f4b84985282":"gZcrH","3c1528a6af170158":"lzy3A"}],"gVXJz":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+const utils_1 = require("ad0ec43ba6c511cf");
+const digitReducer = ({ value , result , posValue  })=>{
+    const q = Math.floor(value / posValue);
+    return {
+        value: value - q * posValue,
+        posValue: posValue / 20,
+        result: [
+            ...result,
+            utils_1.valueToDigit(q)
+        ]
+    };
+};
+const encodeAxis = (length, value)=>utils_1.arrayOf(length, null).reduce(digitReducer, {
+        value,
+        posValue: 20,
+        result: []
+    }).result;
+const interleave = (length)=>(xs, ys)=>{
+        const zipped = utils_1.zip(xs, ys);
+        const padding = length > 8 ? [] : utils_1.arrayOf(8 - length, "0");
+        const digits = [
+            ...utils_1.flatten(zipped),
+            ...padding
+        ];
+        return [
+            ...digits.slice(0, 8),
+            "+",
+            ...digits.slice(8)
+        ].join("");
+    };
+const normalizeLatitude = (lat)=>Math.min(180, Math.max(0, lat + 90));
+const normalizeLongitude = (lon)=>(lon + 180) % 360;
+const encode = (coordinates, length = 10)=>{
+    if (length < 2 || length > 10 || length % 2 !== 0) return null;
+    if (!utils_1.isValidCoordinates(coordinates)) return null;
+    const latitude = normalizeLatitude(utils_1.parseNum(coordinates.latitude));
+    const longitude = normalizeLongitude(utils_1.parseNum(coordinates.longitude));
+    return interleave(length)(encodeAxis(length / 2, latitude), encodeAxis(length / 2, longitude));
+};
+exports.default = encode;
+
+},{"ad0ec43ba6c511cf":"2kxY1"}],"2kxY1":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.zip = exports.flatten = exports.arrayOf = exports.parseNum = exports.valueToDigit = exports.digitToValue = exports.isValidCode = exports.isValidCoordinates = void 0;
+const digits = "23456789CFGHJMPQRVWX";
+const pair = `[${digits}]{2}`;
+const pairOrZero = `([${digits}]|0){2}`;
+const regexp = `^${pair}(${pairOrZero}){0,3}[+](${pair})?$`;
+const isValidCoordinates = (subject)=>{
+    if (subject == null || typeof subject !== "object") return false;
+    return "longitude" in subject && "latitude" in subject;
+};
+exports.isValidCoordinates = isValidCoordinates;
+const isValidCode = (subject)=>typeof subject === "string" && Boolean(subject.match(regexp));
+exports.isValidCode = isValidCode;
+const digitToValue = (x)=>digits.indexOf(x);
+exports.digitToValue = digitToValue;
+const valueToDigit = (x)=>digits.charAt(x);
+exports.valueToDigit = valueToDigit;
+const parseNum = (value)=>typeof value === "string" ? parseFloat(value) : value;
+exports.parseNum = parseNum;
+const arrayOf = (count, fill)=>{
+    const result = [];
+    for(let i = 0; i < count; i++)result.push(fill);
+    return result;
+};
+exports.arrayOf = arrayOf;
+const flatten = (a)=>a.reduce((acc, val)=>acc.concat(val), []);
+exports.flatten = flatten;
+const zip = (a, b)=>a.map((e, i)=>[
+            e,
+            b[i]
+        ]);
+exports.zip = zip;
+
+},{}],"5IKvh":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+const utils_1 = require("1168f333cc50be78");
+const axisReducer = ({ result , posValue  }, value)=>({
+        result: result + posValue * (value === -1 ? 0 : value),
+        posValue: posValue / 20
+    });
+const decodeAxis = (axis)=>axis.map(utils_1.digitToValue).reduce(axisReducer, {
+        result: 0,
+        posValue: 20
+    }).result;
+const resolution = (code)=>{
+    const length = code.replace(/[+0]/g, "").length / 2;
+    return 20 / Math.pow(20, length - 1);
+};
+const decode = (code)=>{
+    if (!utils_1.isValidCode(code)) return null;
+    const res = resolution(code);
+    const [lat, lon] = code.replace(/[+]/g, "").split("").reduce((arrs, digit, idx)=>idx % 2 === 0 ? [
+            [
+                ...arrs[0],
+                digit
+            ],
+            arrs[1]
+        ] : [
+            arrs[0],
+            [
+                ...arrs[1],
+                digit
+            ]
+        ], [
+        [],
+        []
+    ]).map(decodeAxis).map((axis)=>axis + res / 2);
+    return {
+        latitude: parseFloat((lat - 90).toFixed(6)),
+        longitude: parseFloat((lon - 180).toFixed(6)),
+        resolution: res
+    };
+};
+exports.default = decode;
+
+},{"1168f333cc50be78":"2kxY1"}],"gZcrH":[function(require,module,exports) {
+"use strict";
+var __importDefault = this && this.__importDefault || function(mod) {
+    return mod && mod.__esModule ? mod : {
+        "default": mod
+    };
+};
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+const encode_1 = __importDefault(require("9e731fe6ace0f8b7"));
+const decode_1 = __importDefault(require("592b44acecd1599c"));
+const utils_1 = require("35d129010b727d97");
+const adjust = (axis, refAxis, resolution)=>{
+    const refFloat = utils_1.parseNum(refAxis);
+    if (axis > refFloat + resolution / 2) return axis - resolution;
+    if (axis < refFloat - resolution / 2) return axis + resolution;
+    return axis;
+};
+const expand = (shortCode, ref)=>{
+    if (!utils_1.isValidCode(shortCode)) return null;
+    if (!utils_1.isValidCoordinates(ref)) return null;
+    const prefixLength = 11 - shortCode.length;
+    if (prefixLength === 0) return shortCode;
+    const prefixedCode = encode_1.default(ref, prefixLength);
+    if (!prefixedCode) return null;
+    const code = `${prefixedCode.slice(0, prefixLength)}${shortCode}`;
+    const coords = decode_1.default(code);
+    if (!coords) return null;
+    const { latitude , longitude  } = coords;
+    const resolution = Math.pow(20, 2 - prefixLength / 2);
+    return encode_1.default({
+        latitude: adjust(latitude, ref.latitude, resolution),
+        longitude: adjust(longitude, ref.longitude, resolution)
+    });
+};
+exports.default = expand;
+
+},{"9e731fe6ace0f8b7":"gVXJz","592b44acecd1599c":"5IKvh","35d129010b727d97":"2kxY1"}],"lzy3A":[function(require,module,exports) {
+"use strict";
+var __importDefault = this && this.__importDefault || function(mod) {
+    return mod && mod.__esModule ? mod : {
+        "default": mod
+    };
+};
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+const expand_1 = __importDefault(require("5ee48150aa75586"));
+const isValid = (subject)=>typeof subject === "string";
+const shortenReducer = (fullCode, ref)=>(code, length)=>{
+        const shortCode = fullCode.slice(10 - length);
+        return expand_1.default(shortCode, ref) === fullCode ? shortCode : code;
+    };
+const shorten = (code, ref)=>{
+    if (!isValid(code)) return null;
+    return [
+        10,
+        8,
+        6,
+        4
+    ].reduce(shortenReducer(code, ref), null);
+};
+exports.default = shorten;
+
+},{"5ee48150aa75586":"gZcrH"}]},["dMFKV","f3qN5"], "f3qN5", "parcelRequire31ee")
 
 //# sourceMappingURL=index.bfde0018.js.map

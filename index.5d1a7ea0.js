@@ -574,74 +574,46 @@ var _profiles = require("./profiles");
 var _relays = require("./relays");
 var _subscribe = require("./subscribe");
 
-},{"./relays":"le10m","./subscribe":"b20xP","./keys":"bYUmf","./notes":"hlkir","./profiles":"2Bolr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"le10m":[function(require,module,exports) {
+},{"./keys":"bYUmf","./notes":"hlkir","./profiles":"2Bolr","./relays":"le10m","./subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYUmf":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "getRelays", ()=>getRelays);
-parcelHelpers.export(exports, "setRelays", ()=>setRelays);
-parcelHelpers.export(exports, "_connectRelays", ()=>_connectRelays);
-parcelHelpers.export(exports, "_initRelays", ()=>_initRelays);
-parcelHelpers.export(exports, "_publish", ()=>_publish);
-parcelHelpers.export(exports, "_subscribe", ()=>_subscribe);
+parcelHelpers.export(exports, "getPrivateKey", ()=>getPrivateKey);
+parcelHelpers.export(exports, "hasPrivateKey", ()=>hasPrivateKey);
+parcelHelpers.export(exports, "getPublicKey", ()=>getPublicKey);
+parcelHelpers.export(exports, "setPrivateKey", ()=>setPrivateKey);
+parcelHelpers.export(exports, "createPrivateKey", ()=>createPrivateKey);
 var _nostrTools = require("nostr-tools");
 var _constants = require("../constants");
-const relays = [];
-globalThis.relays = relays;
-const getRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const relaysJSONMaybe = localStorage.getItem((0, _constants.RELAYS_STORAGE_KEY));
-    if (relaysJSONMaybe === null || relaysJSONMaybe.length === 0) throw new Error("#we8Qt4 No relays configured");
+const getPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const privateKeyMaybe = localStorage.getItem((0, _constants.PRIVATE_KEY_STORAGE_KEY));
+    if (privateKeyMaybe === null || privateKeyMaybe.length !== 64) throw new Error("#lvYBhM Cannot find private key");
+    return privateKeyMaybe;
+};
+const hasPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
     try {
-        const relays = JSON.parse(relaysJSONMaybe);
-        if (!Array.isArray(relays)) throw new Error("#kSt3oN Relays is not an array of relays");
-        return relays;
-    } catch (error) {
-        console.error("#TKE6Vm Error during JSON.parse()", error);
-        throw error;
-    }
+        await getPrivateKey();
+        return true;
+    } catch  {}
+    return false;
 };
-const setRelays = async ({ relays , localStorage =globalThis.localStorage  })=>{
-    const relaysString = JSON.stringify(relays);
-    localStorage.setItem((0, _constants.RELAYS_STORAGE_KEY), relaysString);
-    return;
-};
-const _connectRelays = async ()=>{
-    const connectionPromises = relays.map((relay)=>relay.connect());
-    await Promise.all(connectionPromises);
-    return;
-};
-const _initRelays = async ({ urls =[]  } = {})=>{
-    // Ensure this is only invoked once
-    if (relays.length > 0) return;
-    // Use the result from `getRelays()` if `urls` is not provided
-    const realUrls = urls.length === 0 ? await getRelays() : urls;
-    realUrls.forEach((url)=>{
-        const relay = (0, _nostrTools.relayInit)(url);
-        relays.push(relay);
+const getPublicKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const privateKey = await getPrivateKey({
+        localStorage
     });
-    await _connectRelays();
+    const publicKey = (0, _nostrTools.getPublicKey)(privateKey);
+    return publicKey;
 };
-const _publish = (event)=>{
-    const publishPromises = relays.map((relay)=>{
-        return new Promise((resolve, reject)=>{
-            const pub = relay.publish(event);
-            pub.on("ok", ()=>resolve());
-            pub.on("failed", (reason)=>reject(reason));
-        });
+const setPrivateKey = async ({ privateKey , localStorage =globalThis.localStorage  })=>{
+    if (privateKey.length !== 64) throw new Error("#irpzXh Private key is not 64 characters");
+    localStorage.setItem((0, _constants.PRIVATE_KEY_STORAGE_KEY), privateKey);
+};
+const createPrivateKey = async ()=>{
+    const privateKey = (0, _nostrTools.generatePrivateKey)();
+    await setPrivateKey({
+        privateKey
     });
-    return publishPromises;
+    return privateKey;
 };
-const _subscribe = ({ filters , onEvent  })=>{
-    const subscriptions = relays.map((relay)=>new Promise((resolve, reject)=>{
-            const subscription = relay.sub(filters);
-            subscription.on("event", onEvent);
-            subscription.on("eose", ()=>{
-                resolve(subscription);
-            });
-        }));
-    return subscriptions;
-};
-globalThis.getRelays = getRelays;
-globalThis.setRelays = setRelays;
 
 },{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9f1gR":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -7204,7 +7176,247 @@ const RELAYS_STORAGE_KEY = "__nostrRelays";
 const PLUS_CODE_TAG_KEY = "l";
 const MAP_NOTE_KIND = 397;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"b20xP":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hlkir":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "createNote", ()=>createNote);
+var _constants = require("../constants");
+var _keys = require("./keys");
+var _relays = require("./relays");
+var _utils = require("./utils");
+const createNote = async ({ content , plusCode , privateKey  })=>{
+    const key = typeof privateKey === "undefined" ? await (0, _keys.getPrivateKey)() : privateKey;
+    const unsignedEvent = {
+        kind: (0, _constants.MAP_NOTE_KIND),
+        content,
+        tags: [
+            [
+                (0, _constants.PLUS_CODE_TAG_KEY),
+                plusCode
+            ]
+        ]
+    };
+    const signedEvent = (0, _utils.signEventWithPrivateKey)({
+        unsignedEvent,
+        privateKey: key
+    });
+    (0, _relays._publish)(signedEvent);
+// TODO - How do we wait for the SEEN here?
+};
+globalThis.createNote = createNote;
+
+},{"../constants":"45DZp","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"le10m":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "getRelays", ()=>getRelays);
+parcelHelpers.export(exports, "setRelays", ()=>setRelays);
+parcelHelpers.export(exports, "_connectRelays", ()=>_connectRelays);
+parcelHelpers.export(exports, "_initRelays", ()=>_initRelays);
+parcelHelpers.export(exports, "_publish", ()=>_publish);
+parcelHelpers.export(exports, "_subscribe", ()=>_subscribe);
+var _nostrTools = require("nostr-tools");
+var _constants = require("../constants");
+const relays = [];
+globalThis.relays = relays;
+const getRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
+    const relaysJSONMaybe = localStorage.getItem((0, _constants.RELAYS_STORAGE_KEY));
+    if (relaysJSONMaybe === null || relaysJSONMaybe.length === 0) throw new Error("#we8Qt4 No relays configured");
+    try {
+        const relays = JSON.parse(relaysJSONMaybe);
+        if (!Array.isArray(relays)) throw new Error("#kSt3oN Relays is not an array of relays");
+        return relays;
+    } catch (error) {
+        console.error("#TKE6Vm Error during JSON.parse()", error);
+        throw error;
+    }
+};
+const setRelays = async ({ relays , localStorage =globalThis.localStorage  })=>{
+    const relaysString = JSON.stringify(relays);
+    localStorage.setItem((0, _constants.RELAYS_STORAGE_KEY), relaysString);
+    return;
+};
+const _connectRelays = async ()=>{
+    const connectionPromises = relays.map((relay)=>relay.connect());
+    await Promise.all(connectionPromises);
+    return;
+};
+const _initRelays = async ({ urls =[]  } = {})=>{
+    // Ensure this is only invoked once
+    if (relays.length > 0) return;
+    // Use the result from `getRelays()` if `urls` is not provided
+    const realUrls = urls.length === 0 ? await getRelays() : urls;
+    realUrls.forEach((url)=>{
+        const relay = (0, _nostrTools.relayInit)(url);
+        relays.push(relay);
+    });
+    await _connectRelays();
+};
+const _publish = (event)=>{
+    const publishPromises = relays.map((relay)=>{
+        return new Promise((resolve, reject)=>{
+            const pub = relay.publish(event);
+            pub.on("ok", ()=>resolve());
+            pub.on("failed", (reason)=>reject(reason));
+        });
+    });
+    return publishPromises;
+};
+const _subscribe = ({ filters , onEvent  })=>{
+    const subscriptions = relays.map((relay)=>new Promise((resolve, reject)=>{
+            const subscription = relay.sub(filters);
+            subscription.on("event", onEvent);
+            subscription.on("eose", ()=>{
+                resolve(subscription);
+            });
+        }));
+    return subscriptions;
+};
+globalThis.getRelays = getRelays;
+globalThis.setRelays = setRelays;
+
+},{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fcvaj":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "dateToUnix", ()=>dateToUnix);
+parcelHelpers.export(exports, "getPublicKeyFromEvent", ()=>getPublicKeyFromEvent);
+parcelHelpers.export(exports, "getProfileFromEvent", ()=>getProfileFromEvent);
+parcelHelpers.export(exports, "filterForTag", ()=>filterForTag);
+parcelHelpers.export(exports, "getTagFirstValueFromEvent", ()=>getTagFirstValueFromEvent);
+parcelHelpers.export(exports, "getTagValuesFromEvent", ()=>getTagValuesFromEvent);
+parcelHelpers.export(exports, "signEventWithPrivateKey", ()=>signEventWithPrivateKey);
+parcelHelpers.export(exports, "uniq", ()=>uniq);
+var _nostrTools = require("nostr-tools");
+const dateToUnix = (_date)=>{
+    const date = _date || new Date();
+    return Math.floor(date.getTime() / 1000);
+};
+const getPublicKeyFromEvent = ({ event  })=>{
+    const maybeDelegator = (0, _nostrTools.nip26).getDelegator(event);
+    return maybeDelegator || event.pubkey;
+};
+const getProfileFromEvent = ({ event  })=>{
+    if (event.kind !== (0, _nostrTools.Kind).Metadata) throw new Error("#pC5T6P Trying to get profile from non metadata event");
+    const profileJson = event.content;
+    const publicKey = getPublicKeyFromEvent({
+        event
+    });
+    try {
+        const profile = JSON.parse(profileJson);
+        return {
+            ...profile,
+            publicKey
+        };
+    } catch (e) {
+        const message = "#j2o1vH Failed to get profile from event";
+        console.error(message, e);
+        throw new Error(message);
+    }
+};
+const filterForTag = (key)=>(tags)=>tags[0] === key;
+const getTagFirstValueFromEvent = ({ event , tag  })=>{
+    const tagArray = event.tags.find(filterForTag(tag));
+    if (typeof tagArray === "undefined") return;
+    // The value is the second element in the array
+    return tagArray[1];
+};
+const getTagValuesFromEvent = ({ event , tag  })=>{
+    const tagArrays = event.tags.filter(filterForTag(tag));
+    const tagValues = tagArrays.map((tag)=>tag[1]);
+    return tagValues;
+};
+const signEventWithPrivateKey = ({ unsignedEvent , privateKey  })=>{
+    const pubkey = (0, _nostrTools.getPublicKey)(privateKey);
+    const base = {
+        ...unsignedEvent,
+        created_at: dateToUnix(),
+        pubkey
+    };
+    const id = (0, _nostrTools.getEventHash)(base);
+    const toSign = {
+        ...base,
+        id
+    };
+    const sig = (0, _nostrTools.signEvent)(toSign, privateKey);
+    const signed = {
+        ...toSign,
+        sig
+    };
+    return signed;
+};
+const uniq = (input)=>{
+    return input.filter((val, index, input)=>index === input.indexOf(val));
+};
+
+},{"nostr-tools":"9f1gR","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2Bolr":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "setProfile", ()=>setProfile);
+parcelHelpers.export(exports, "getProfile", ()=>getProfile);
+var _nostrTools = require("nostr-tools");
+var _keys = require("./keys");
+var _relays = require("./relays");
+var _utils = require("./utils");
+const setProfile = async ({ name , about , privateKey , localStorage  })=>{
+    const key = typeof privateKey !== "undefined" ? privateKey : await (0, _keys.getPrivateKey)({
+        localStorage
+    });
+    const content = JSON.stringify({
+        name,
+        about
+    });
+    const unsignedEvent = {
+        kind: (0, _nostrTools.Kind).Metadata,
+        content,
+        tags: []
+    };
+    const signedEvent = (0, _utils.signEventWithPrivateKey)({
+        unsignedEvent,
+        privateKey: key
+    });
+    // TODO - We should probably await here so that this only resolves after successfully publishing the event
+    try {
+        const publishPromises = (0, _relays._publish)(signedEvent);
+        await Promise.all(publishPromises);
+    } catch (error) {
+        const message = "#mkox3R Error saving profile";
+        console.error(message, error);
+        globalThis.alert("There was an error saving your profile. Please try again. #sbX20d");
+    }
+};
+const getProfile = async ({ publicKey  })=>{
+    return new Promise((resolve, reject)=>{
+        const subscriptions = (0, _relays._subscribe)({
+            filters: [
+                {
+                    kinds: [
+                        (0, _nostrTools.Kind).Metadata
+                    ],
+                    authors: [
+                        publicKey
+                    ]
+                }
+            ],
+            onEvent: (event)=>{
+                try {
+                    const profile = (0, _utils.getProfileFromEvent)({
+                        event
+                    });
+                    // NOTE: This will be called multiple times, but any calls after the
+                    // first are ignored
+                    resolve(profile);
+                } catch (error) {
+                    console.error("#P0haKt Failed to get profile from event", error);
+                }
+            }
+        });
+        // Timeout after 2s. This is a no-op if the promise already resolved above.
+        setTimeout(reject, 2e3);
+    });
+};
+globalThis.setProfile = setProfile;
+globalThis.getProfile = getProfile;
+
+},{"nostr-tools":"9f1gR","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"b20xP":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "subscribe", ()=>subscribe);
@@ -7318,218 +7530,6 @@ const subscribe = async ({ publicKey , onNoteReceived , limit =200  })=>{
     notes.forEach((note)=>onNoteReceived(note));
 };
 
-},{"nostr-tools":"9f1gR","../constants":"45DZp","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fcvaj":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "dateToUnix", ()=>dateToUnix);
-parcelHelpers.export(exports, "getPublicKeyFromEvent", ()=>getPublicKeyFromEvent);
-parcelHelpers.export(exports, "getProfileFromEvent", ()=>getProfileFromEvent);
-parcelHelpers.export(exports, "filterForTag", ()=>filterForTag);
-parcelHelpers.export(exports, "getTagFirstValueFromEvent", ()=>getTagFirstValueFromEvent);
-parcelHelpers.export(exports, "getTagValuesFromEvent", ()=>getTagValuesFromEvent);
-parcelHelpers.export(exports, "signEventWithPrivateKey", ()=>signEventWithPrivateKey);
-parcelHelpers.export(exports, "uniq", ()=>uniq);
-var _nostrTools = require("nostr-tools");
-const dateToUnix = (_date)=>{
-    const date = _date || new Date();
-    return Math.floor(date.getTime() / 1000);
-};
-const getPublicKeyFromEvent = ({ event  })=>{
-    const maybeDelegator = (0, _nostrTools.nip26).getDelegator(event);
-    return maybeDelegator || event.pubkey;
-};
-const getProfileFromEvent = ({ event  })=>{
-    if (event.kind !== (0, _nostrTools.Kind).Metadata) throw new Error("#pC5T6P Trying to get profile from non metadata event");
-    const profileJson = event.content;
-    const publicKey = getPublicKeyFromEvent({
-        event
-    });
-    try {
-        const profile = JSON.parse(profileJson);
-        return {
-            ...profile,
-            publicKey
-        };
-    } catch (e) {
-        const message = "#j2o1vH Failed to get profile from event";
-        console.error(message, e);
-        throw new Error(message);
-    }
-};
-const filterForTag = (key)=>(tags)=>tags[0] === key;
-const getTagFirstValueFromEvent = ({ event , tag  })=>{
-    const tagArray = event.tags.find(filterForTag(tag));
-    if (typeof tagArray === "undefined") return;
-    // The value is the second element in the array
-    return tagArray[1];
-};
-const getTagValuesFromEvent = ({ event , tag  })=>{
-    const tagArrays = event.tags.filter(filterForTag(tag));
-    const tagValues = tagArrays.map((tag)=>tag[1]);
-    return tagValues;
-};
-const signEventWithPrivateKey = ({ unsignedEvent , privateKey  })=>{
-    const pubkey = (0, _nostrTools.getPublicKey)(privateKey);
-    const base = {
-        ...unsignedEvent,
-        created_at: dateToUnix(),
-        pubkey
-    };
-    const id = (0, _nostrTools.getEventHash)(base);
-    const toSign = {
-        ...base,
-        id
-    };
-    const sig = (0, _nostrTools.signEvent)(toSign, privateKey);
-    const signed = {
-        ...toSign,
-        sig
-    };
-    return signed;
-};
-const uniq = (input)=>{
-    return input.filter((val, index, input)=>index === input.indexOf(val));
-};
-
-},{"nostr-tools":"9f1gR","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYUmf":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "getPrivateKey", ()=>getPrivateKey);
-parcelHelpers.export(exports, "hasPrivateKey", ()=>hasPrivateKey);
-parcelHelpers.export(exports, "getPublicKey", ()=>getPublicKey);
-parcelHelpers.export(exports, "setPrivateKey", ()=>setPrivateKey);
-parcelHelpers.export(exports, "createPrivateKey", ()=>createPrivateKey);
-var _nostrTools = require("nostr-tools");
-var _constants = require("../constants");
-const getPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const privateKeyMaybe = localStorage.getItem((0, _constants.PRIVATE_KEY_STORAGE_KEY));
-    if (privateKeyMaybe === null || privateKeyMaybe.length !== 64) throw new Error("#lvYBhM Cannot find private key");
-    return privateKeyMaybe;
-};
-const hasPrivateKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    try {
-        await getPrivateKey();
-        return true;
-    } catch  {}
-    return false;
-};
-const getPublicKey = async ({ localStorage =globalThis.localStorage  } = {})=>{
-    const privateKey = await getPrivateKey({
-        localStorage
-    });
-    const publicKey = (0, _nostrTools.getPublicKey)(privateKey);
-    return publicKey;
-};
-const setPrivateKey = async ({ privateKey , localStorage =globalThis.localStorage  })=>{
-    if (privateKey.length !== 64) throw new Error("#irpzXh Private key is not 64 characters");
-    localStorage.setItem((0, _constants.PRIVATE_KEY_STORAGE_KEY), privateKey);
-};
-const createPrivateKey = async ()=>{
-    const privateKey = (0, _nostrTools.generatePrivateKey)();
-    await setPrivateKey({
-        privateKey
-    });
-    return privateKey;
-};
-
-},{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hlkir":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "createNote", ()=>createNote);
-var _constants = require("../constants");
-var _keys = require("./keys");
-var _relays = require("./relays");
-var _utils = require("./utils");
-const createNote = async ({ content , plusCode , privateKey  })=>{
-    const key = typeof privateKey === "undefined" ? await (0, _keys.getPrivateKey)() : privateKey;
-    const unsignedEvent = {
-        kind: (0, _constants.MAP_NOTE_KIND),
-        content,
-        tags: [
-            [
-                (0, _constants.PLUS_CODE_TAG_KEY),
-                plusCode
-            ]
-        ]
-    };
-    const signedEvent = (0, _utils.signEventWithPrivateKey)({
-        unsignedEvent,
-        privateKey: key
-    });
-    (0, _relays._publish)(signedEvent);
-// TODO - How do we wait for the SEEN here?
-};
-globalThis.createNote = createNote;
-
-},{"../constants":"45DZp","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2Bolr":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "setProfile", ()=>setProfile);
-parcelHelpers.export(exports, "getProfile", ()=>getProfile);
-var _nostrTools = require("nostr-tools");
-var _keys = require("./keys");
-var _relays = require("./relays");
-var _utils = require("./utils");
-const setProfile = async ({ name , about , privateKey , localStorage  })=>{
-    const key = typeof privateKey !== "undefined" ? privateKey : await (0, _keys.getPrivateKey)({
-        localStorage
-    });
-    const content = JSON.stringify({
-        name,
-        about
-    });
-    const unsignedEvent = {
-        kind: (0, _nostrTools.Kind).Metadata,
-        content,
-        tags: []
-    };
-    const signedEvent = (0, _utils.signEventWithPrivateKey)({
-        unsignedEvent,
-        privateKey: key
-    });
-    // TODO - We should probably await here so that this only resolves after successfully publishing the event
-    try {
-        const publishPromises = (0, _relays._publish)(signedEvent);
-        await Promise.all(publishPromises);
-    } catch (error) {
-        const message = "#mkox3R Error saving profile";
-        console.error(message, error);
-        globalThis.alert("There was an error saving your profile. Please try again. #sbX20d");
-    }
-};
-const getProfile = async ({ publicKey  })=>{
-    return new Promise((resolve, reject)=>{
-        const subscriptions = (0, _relays._subscribe)({
-            filters: [
-                {
-                    kinds: [
-                        (0, _nostrTools.Kind).Metadata
-                    ],
-                    authors: [
-                        publicKey
-                    ]
-                }
-            ],
-            onEvent: (event)=>{
-                try {
-                    const profile = (0, _utils.getProfileFromEvent)({
-                        event
-                    });
-                    // NOTE: This will be called multiple times, but any calls after the
-                    // first are ignored
-                    resolve(profile);
-                } catch (error) {
-                    console.error("#P0haKt Failed to get profile from event", error);
-                }
-            }
-        });
-        // Timeout after 2s. This is a no-op if the promise already resolved above.
-        setTimeout(reject, 2e3);
-    });
-};
-globalThis.setProfile = setProfile;
-globalThis.getProfile = getProfile;
-
-},{"nostr-tools":"9f1gR","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["1oCNm","hEBz2"], "hEBz2", "parcelRequire31ee")
+},{"nostr-tools":"9f1gR","../constants":"45DZp","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["1oCNm","hEBz2"], "hEBz2", "parcelRequire31ee")
 
 //# sourceMappingURL=index.5d1a7ea0.js.map
