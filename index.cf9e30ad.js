@@ -564,10 +564,8 @@ var _leaflet = require("leaflet");
 var _nostr = require("./nostr");
 var _keys = require("./nostr/keys");
 var _profiles = require("./nostr/profiles");
-var _relays = require("./nostr/relays");
 var _router = require("./router");
 const startup = async ()=>{
-    await (0, _relays.createRelays)();
     const isLoggedIn = await (0, _keys.hasPrivateKey)();
     const loggedIn = _leaflet.DomUtil.get("loggedIn");
     const loggedOut = _leaflet.DomUtil.get("loggedOut");
@@ -679,6 +677,6 @@ const startup = async ()=>{
 };
 startup();
 
-},{"leaflet":"iFbO2","./nostr":"hEBz2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","./router":"4QFWt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./nostr/relays":"le10m"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
+},{"leaflet":"iFbO2","./nostr":"hEBz2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","./router":"4QFWt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
 
 //# sourceMappingURL=index.cf9e30ad.js.map

@@ -568,13 +568,14 @@ parcelHelpers.export(exports, "setProfile", ()=>(0, _profiles.setProfile));
 parcelHelpers.export(exports, "getRelays", ()=>(0, _relays.getRelays));
 parcelHelpers.export(exports, "setRelays", ()=>(0, _relays.setRelays));
 parcelHelpers.export(exports, "subscribe", ()=>(0, _subscribe.subscribe));
+var _relays = require("./relays");
 var _keys = require("./keys");
 var _notes = require("./notes");
 var _profiles = require("./profiles");
-var _relays = require("./relays");
 var _subscribe = require("./subscribe");
+(0, _relays.createRelays)();
 
-},{"./keys":"bYUmf","./relays":"le10m","./notes":"hlkir","./profiles":"2Bolr","./subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYUmf":[function(require,module,exports) {
+},{"./keys":"bYUmf","./notes":"hlkir","./profiles":"2Bolr","./relays":"le10m","./subscribe":"b20xP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYUmf":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getPrivateKey", ()=>getPrivateKey);
@@ -7195,7 +7196,36 @@ const DEFAULT_RELAYS = [
     "wss://nostr.slothy.win"
 ];
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"le10m":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hlkir":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "createNote", ()=>createNote);
+var _constants = require("../constants");
+var _keys = require("./keys");
+var _relays = require("./relays");
+var _utils = require("./utils");
+const createNote = async ({ content , plusCode , privateKey  })=>{
+    const key = typeof privateKey === "undefined" ? await (0, _keys.getPrivateKey)() : privateKey;
+    const unsignedEvent = {
+        kind: (0, _constants.MAP_NOTE_KIND),
+        content,
+        tags: [
+            [
+                (0, _constants.PLUS_CODE_TAG_KEY),
+                plusCode
+            ]
+        ]
+    };
+    const signedEvent = (0, _utils.signEventWithPrivateKey)({
+        unsignedEvent,
+        privateKey: key
+    });
+    (0, _relays._publish)(signedEvent);
+// TODO - How do we wait for the SEEN here?
+};
+globalThis.createNote = createNote;
+
+},{"../constants":"45DZp","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"le10m":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getRelays", ()=>getRelays);
@@ -7224,7 +7254,15 @@ const getRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
 };
 const hasRelays = async ({ localStorage =globalThis.localStorage  } = {})=>{
     const relaysJson = localStorage.getItem((0, _constants.RELAYS_STORAGE_KEY));
-    return relaysJson === null;
+    if (relaysJson === null) return false;
+    try {
+        const relays = JSON.parse(relaysJson);
+        if (Array.isArray(relays)) return true;
+        return false;
+    } catch  {
+        return false;
+    }
+    return true;
 };
 const setRelays = async ({ relays , localStorage =globalThis.localStorage  })=>{
     const relaysString = JSON.stringify(relays);
@@ -7274,36 +7312,7 @@ const createRelays = async ()=>{
     });
 };
 
-},{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hlkir":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "createNote", ()=>createNote);
-var _constants = require("../constants");
-var _keys = require("./keys");
-var _relays = require("./relays");
-var _utils = require("./utils");
-const createNote = async ({ content , plusCode , privateKey  })=>{
-    const key = typeof privateKey === "undefined" ? await (0, _keys.getPrivateKey)() : privateKey;
-    const unsignedEvent = {
-        kind: (0, _constants.MAP_NOTE_KIND),
-        content,
-        tags: [
-            [
-                (0, _constants.PLUS_CODE_TAG_KEY),
-                plusCode
-            ]
-        ]
-    };
-    const signedEvent = (0, _utils.signEventWithPrivateKey)({
-        unsignedEvent,
-        privateKey: key
-    });
-    (0, _relays._publish)(signedEvent);
-// TODO - How do we wait for the SEEN here?
-};
-globalThis.createNote = createNote;
-
-},{"../constants":"45DZp","./keys":"bYUmf","./relays":"le10m","./utils":"fcvaj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fcvaj":[function(require,module,exports) {
+},{"nostr-tools":"9f1gR","../constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fcvaj":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "dateToUnix", ()=>dateToUnix);
