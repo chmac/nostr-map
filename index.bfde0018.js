@@ -630,7 +630,7 @@ map.on("contextmenu", async (event)=>{
     })}">your own map</a> to add notes.`;
     (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(popupContent).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
 });
-function updateUrl() {
+async function updateUrl() {
     const center = map.getCenter();
     const zoom = map.getZoom();
     const view = {
@@ -638,7 +638,7 @@ function updateUrl() {
         lng: center.lng,
         zoom
     };
-    const { publicKey  } = (0, _router.getPublicKeyFromUrl)();
+    const publicKey = await (0, _keys.getPublicKey)();
     if (!publicKey) return;
     const yourUrl = (0, _router.getUrlFromPublicKeyAndView)({
         publicKey,
