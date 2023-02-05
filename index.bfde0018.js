@@ -624,9 +624,6 @@ map.on("contextmenu", async (event)=>{
         publicKey: myPublicKey
     })}">your own map</a> to add notes.`;
     (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(popupContent).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
-    // There's a weirdness on Safari on iOS where long pressing the map selects
-    // text, this is an attempt at a workaround
-    document.getElementById("content")?.focus();
 });
 function generatePolygonFromPlusCode(plusCode) {
     const decoded = (0, _pluscodes.decode)(plusCode);
@@ -696,7 +693,6 @@ function createPopupHtml(createNoteCallback) {
     contentInput.required = true;
     contentInput.placeholder = "What do you want to say about this area?";
     const submitButton = document.createElement("button");
-    submitButton.id = "content_submit";
     submitButton.innerText = "Add Note!";
     submitButton.onclick = ()=>{
         const content = contentInput.value;
@@ -11355,28 +11351,28 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.shorten = exports.expand = exports.decode = exports.encode = void 0;
-var encode_1 = require("2a0bc8bd1ac73321");
+var encode_1 = require("bb915f7d80c75cc2");
 Object.defineProperty(exports, "encode", {
     enumerable: true,
     get: function() {
         return __importDefault(encode_1).default;
     }
 });
-var decode_1 = require("7d3f2da98b11d866");
+var decode_1 = require("c8237cf06fa6c833");
 Object.defineProperty(exports, "decode", {
     enumerable: true,
     get: function() {
         return __importDefault(decode_1).default;
     }
 });
-var expand_1 = require("997f0f4b84985282");
+var expand_1 = require("aa21cc6c2a182ac6");
 Object.defineProperty(exports, "expand", {
     enumerable: true,
     get: function() {
         return __importDefault(expand_1).default;
     }
 });
-var shorten_1 = require("3c1528a6af170158");
+var shorten_1 = require("ad8bcec7daee8255");
 Object.defineProperty(exports, "shorten", {
     enumerable: true,
     get: function() {
@@ -11384,12 +11380,12 @@ Object.defineProperty(exports, "shorten", {
     }
 });
 
-},{"2a0bc8bd1ac73321":"gVXJz","7d3f2da98b11d866":"5IKvh","997f0f4b84985282":"gZcrH","3c1528a6af170158":"lzy3A"}],"gVXJz":[function(require,module,exports) {
+},{"bb915f7d80c75cc2":"gVXJz","c8237cf06fa6c833":"5IKvh","aa21cc6c2a182ac6":"gZcrH","ad8bcec7daee8255":"lzy3A"}],"gVXJz":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-const utils_1 = require("ad0ec43ba6c511cf");
+const utils_1 = require("42ad5c5fb2834706");
 const digitReducer = ({ value , result , posValue  })=>{
     const q = Math.floor(value / posValue);
     return {
@@ -11430,7 +11426,7 @@ const encode = (coordinates, length = 10)=>{
 };
 exports.default = encode;
 
-},{"ad0ec43ba6c511cf":"2kxY1"}],"2kxY1":[function(require,module,exports) {
+},{"42ad5c5fb2834706":"2kxY1"}],"2kxY1":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -11472,7 +11468,7 @@ exports.zip = zip;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-const utils_1 = require("1168f333cc50be78");
+const utils_1 = require("759c3c6189b23769");
 const axisReducer = ({ result , posValue  }, value)=>({
         result: result + posValue * (value === -1 ? 0 : value),
         posValue: posValue / 20
@@ -11512,7 +11508,7 @@ const decode = (code)=>{
 };
 exports.default = decode;
 
-},{"1168f333cc50be78":"2kxY1"}],"gZcrH":[function(require,module,exports) {
+},{"759c3c6189b23769":"2kxY1"}],"gZcrH":[function(require,module,exports) {
 "use strict";
 var __importDefault = this && this.__importDefault || function(mod) {
     return mod && mod.__esModule ? mod : {
@@ -11522,9 +11518,9 @@ var __importDefault = this && this.__importDefault || function(mod) {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-const encode_1 = __importDefault(require("9e731fe6ace0f8b7"));
-const decode_1 = __importDefault(require("592b44acecd1599c"));
-const utils_1 = require("35d129010b727d97");
+const encode_1 = __importDefault(require("b5993ae600a5f62d"));
+const decode_1 = __importDefault(require("e6e2e125cc97d4bf"));
+const utils_1 = require("a1f35b0950287e46");
 const adjust = (axis, refAxis, resolution)=>{
     const refFloat = utils_1.parseNum(refAxis);
     if (axis > refFloat + resolution / 2) return axis - resolution;
@@ -11550,7 +11546,7 @@ const expand = (shortCode, ref)=>{
 };
 exports.default = expand;
 
-},{"9e731fe6ace0f8b7":"gVXJz","592b44acecd1599c":"5IKvh","35d129010b727d97":"2kxY1"}],"lzy3A":[function(require,module,exports) {
+},{"b5993ae600a5f62d":"gVXJz","e6e2e125cc97d4bf":"5IKvh","a1f35b0950287e46":"2kxY1"}],"lzy3A":[function(require,module,exports) {
 "use strict";
 var __importDefault = this && this.__importDefault || function(mod) {
     return mod && mod.__esModule ? mod : {
@@ -11560,7 +11556,7 @@ var __importDefault = this && this.__importDefault || function(mod) {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-const expand_1 = __importDefault(require("5ee48150aa75586"));
+const expand_1 = __importDefault(require("5786571f84a7f1c0"));
 const isValid = (subject)=>typeof subject === "string";
 const shortenReducer = (fullCode, ref)=>(code, length)=>{
         const shortCode = fullCode.slice(10 - length);
@@ -11577,7 +11573,7 @@ const shorten = (code, ref)=>{
 };
 exports.default = shorten;
 
-},{"5ee48150aa75586":"gZcrH"}],"4QFWt":[function(require,module,exports) {
+},{"5786571f84a7f1c0":"gZcrH"}],"4QFWt":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getPublicKeyFromUrl", ()=>getPublicKeyFromUrl);

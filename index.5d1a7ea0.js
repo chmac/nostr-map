@@ -2543,8 +2543,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.sha256 = void 0;
-const _sha2_js_1 = require("bfe4a15d4a7c35ed");
-const utils_js_1 = require("35fc8c226442297c");
+const _sha2_js_1 = require("aeb537f7f3f6520e");
+const utils_js_1 = require("e888da6259ff3fea");
 // Choice: a ? b : c
 const Chi = (a, b, c)=>a & b ^ ~a & c;
 // Majority function, true if any two inpust is true
@@ -2718,13 +2718,13 @@ class SHA256 extends _sha2_js_1.SHA2 {
 }
 exports.sha256 = (0, utils_js_1.wrapConstructor)(()=>new SHA256());
 
-},{"bfe4a15d4a7c35ed":"6grsp","35fc8c226442297c":"4eGYF"}],"6grsp":[function(require,module,exports) {
+},{"aeb537f7f3f6520e":"6grsp","e888da6259ff3fea":"4eGYF"}],"6grsp":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.SHA2 = void 0;
-const utils_js_1 = require("f581286f80476a8c");
+const utils_js_1 = require("b20bd4201d36ab58");
 // Polyfill for Safari 14
 function setBigUint64(view, byteOffset, value, isLE) {
     if (typeof view.setBigUint64 === "function") return view.setBigUint64(byteOffset, value, isLE);
@@ -2827,7 +2827,7 @@ class SHA2 extends utils_js_1.Hash {
 }
 exports.SHA2 = SHA2;
 
-},{"f581286f80476a8c":"4eGYF"}],"4eGYF":[function(require,module,exports) {
+},{"b20bd4201d36ab58":"4eGYF"}],"4eGYF":[function(require,module,exports) {
 "use strict";
 /*! noble-hashes - MIT License (c) 2021 Paul Miller (paulmillr.com) */ Object.defineProperty(exports, "__esModule", {
     value: true
@@ -2835,7 +2835,7 @@ exports.SHA2 = SHA2;
 exports.randomBytes = exports.wrapConstructorWithOpts = exports.wrapConstructor = exports.checkOpts = exports.Hash = exports.assertHash = exports.assertBytes = exports.assertBool = exports.assertNumber = exports.concatBytes = exports.toBytes = exports.utf8ToBytes = exports.asyncLoop = exports.nextTick = exports.hexToBytes = exports.bytesToHex = exports.isLE = exports.rotr = exports.createView = exports.u32 = exports.u8 = void 0;
 // The import here is via the package name. This is to ensure
 // that exports mapping/resolution does fall into place.
-const crypto_1 = require("e6c7a25b1ec8f48f");
+const crypto_1 = require("2ae5454274e2515");
 // Cast array to different type
 const u8 = (arr)=>new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
 exports.u8 = u8;
@@ -2992,7 +2992,7 @@ function randomBytes(bytesLength = 32) {
 }
 exports.randomBytes = randomBytes;
 
-},{"e6c7a25b1ec8f48f":"iMUH0"}],"iMUH0":[function(require,module,exports) {
+},{"2ae5454274e2515":"iMUH0"}],"iMUH0":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -5451,12 +5451,12 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.mnemonicToSeedSync = exports.mnemonicToSeed = exports.validateMnemonic = exports.entropyToMnemonic = exports.mnemonicToEntropy = exports.generateMnemonic = void 0;
-/*! scure-bip39 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */ const _assert_1 = require("c1e17a3e7bc7aa26");
-const pbkdf2_1 = require("ab324de880988886");
-const sha256_1 = require("4faddc1609b8922d");
-const sha512_1 = require("3e842ab7052bec6e");
-const utils_1 = require("2dcfaf7fa6e7af1d");
-const base_1 = require("61d64c081241dfeb");
+/*! scure-bip39 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */ const _assert_1 = require("d69a35f86e929b8c");
+const pbkdf2_1 = require("4d706898ae680925");
+const sha256_1 = require("93cfda8cafa55fab");
+const sha512_1 = require("7908fc42ed88dc52");
+const utils_1 = require("e9db1711f0b0c584");
+const base_1 = require("8fff2b04b98f2eea");
 // Japanese wordlist
 const isJapanese = (wordlist)=>wordlist[0] === "あいこくしん";
 // Normalization replaces equivalent sequences of characters
@@ -5595,7 +5595,7 @@ exports.mnemonicToSeed = mnemonicToSeed;
 }
 exports.mnemonicToSeedSync = mnemonicToSeedSync;
 
-},{"c1e17a3e7bc7aa26":"BFdql","ab324de880988886":"c4hz5","4faddc1609b8922d":"JjjO8","3e842ab7052bec6e":"jlH7E","2dcfaf7fa6e7af1d":"2ehgp","61d64c081241dfeb":"cvmUK"}],"BFdql":[function(require,module,exports) {
+},{"d69a35f86e929b8c":"BFdql","4d706898ae680925":"c4hz5","93cfda8cafa55fab":"JjjO8","7908fc42ed88dc52":"jlH7E","e9db1711f0b0c584":"2ehgp","8fff2b04b98f2eea":"cvmUK"}],"BFdql":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -5647,9 +5647,9 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.pbkdf2Async = exports.pbkdf2 = void 0;
-const _assert_js_1 = require("768eb1021fce060");
-const hmac_js_1 = require("9682f01ad3d2d61");
-const utils_js_1 = require("af467e60a52bb079");
+const _assert_js_1 = require("7ef93d2220cb30e5");
+const hmac_js_1 = require("317994066b7c7462");
+const utils_js_1 = require("262ef120e1512cc3");
 // Common prologue and epilogue for sync/async functions
 function pbkdf2Init(hash, _password, _salt, _opts) {
     _assert_js_1.default.hash(hash);
@@ -5740,14 +5740,14 @@ async function pbkdf2Async(hash, password, salt, opts) {
 }
 exports.pbkdf2Async = pbkdf2Async;
 
-},{"768eb1021fce060":"BFdql","9682f01ad3d2d61":"3IfCc","af467e60a52bb079":"2ehgp"}],"3IfCc":[function(require,module,exports) {
+},{"7ef93d2220cb30e5":"BFdql","317994066b7c7462":"3IfCc","262ef120e1512cc3":"2ehgp"}],"3IfCc":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.hmac = void 0;
-const _assert_js_1 = require("6224bce973cd257f");
-const utils_js_1 = require("b93c86865e60756e");
+const _assert_js_1 = require("c601a2a3625fa972");
+const utils_js_1 = require("82a180b3fdd6785a");
 // HMAC (RFC 2104)
 class HMAC extends utils_js_1.Hash {
     constructor(hash, _key){
@@ -5820,7 +5820,7 @@ class HMAC extends utils_js_1.Hash {
 exports.hmac = hmac;
 exports.hmac.create = (hash, key)=>new HMAC(hash, key);
 
-},{"6224bce973cd257f":"BFdql","b93c86865e60756e":"2ehgp"}],"2ehgp":[function(require,module,exports) {
+},{"c601a2a3625fa972":"BFdql","82a180b3fdd6785a":"2ehgp"}],"2ehgp":[function(require,module,exports) {
 "use strict";
 /*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) */ Object.defineProperty(exports, "__esModule", {
     value: true
@@ -5828,7 +5828,7 @@ exports.hmac.create = (hash, key)=>new HMAC(hash, key);
 exports.randomBytes = exports.wrapConstructorWithOpts = exports.wrapConstructor = exports.checkOpts = exports.Hash = exports.concatBytes = exports.toBytes = exports.utf8ToBytes = exports.asyncLoop = exports.nextTick = exports.hexToBytes = exports.bytesToHex = exports.isLE = exports.rotr = exports.createView = exports.u32 = exports.u8 = void 0;
 // The import here is via the package name. This is to ensure
 // that exports mapping/resolution does fall into place.
-const crypto_1 = require("e5579ca10247847f");
+const crypto_1 = require("83ad9c8469dc9113");
 // Cast array to different type
 const u8 = (arr)=>new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
 exports.u8 = u8;
@@ -5962,7 +5962,7 @@ exports.wrapConstructorWithOpts = wrapConstructorWithOpts;
 }
 exports.randomBytes = randomBytes;
 
-},{"e5579ca10247847f":"7XNEy"}],"7XNEy":[function(require,module,exports) {
+},{"83ad9c8469dc9113":"7XNEy"}],"7XNEy":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -5979,8 +5979,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.sha224 = exports.sha256 = void 0;
-const _sha2_js_1 = require("ec8b0344018aed94");
-const utils_js_1 = require("2761fe2a66bf700e");
+const _sha2_js_1 = require("48655dee21f07664");
+const utils_js_1 = require("2901127c53ea77d9");
 // Choice: a ? b : c
 const Chi = (a, b, c)=>a & b ^ ~a & c;
 // Majority function, true if any two inpust is true
@@ -6173,14 +6173,14 @@ class SHA224 extends SHA256 {
  */ exports.sha256 = (0, utils_js_1.wrapConstructor)(()=>new SHA256());
 exports.sha224 = (0, utils_js_1.wrapConstructor)(()=>new SHA224());
 
-},{"ec8b0344018aed94":"6HKeB","2761fe2a66bf700e":"2ehgp"}],"6HKeB":[function(require,module,exports) {
+},{"48655dee21f07664":"6HKeB","2901127c53ea77d9":"2ehgp"}],"6HKeB":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.SHA2 = void 0;
-const _assert_js_1 = require("fc96fa8b39f04e");
-const utils_js_1 = require("e50a50fd515cedc6");
+const _assert_js_1 = require("337daf64cdfa29c6");
+const utils_js_1 = require("9f8ffa320a85b486");
 // Polyfill for Safari 14
 function setBigUint64(view, byteOffset, value, isLE) {
     if (typeof view.setBigUint64 === "function") return view.setBigUint64(byteOffset, value, isLE);
@@ -6287,15 +6287,15 @@ class SHA2 extends utils_js_1.Hash {
 }
 exports.SHA2 = SHA2;
 
-},{"fc96fa8b39f04e":"BFdql","e50a50fd515cedc6":"2ehgp"}],"jlH7E":[function(require,module,exports) {
+},{"337daf64cdfa29c6":"BFdql","9f8ffa320a85b486":"2ehgp"}],"jlH7E":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.sha384 = exports.sha512_256 = exports.sha512_224 = exports.sha512 = exports.SHA512 = void 0;
-const _sha2_js_1 = require("c9d75bdf156cfa5e");
-const _u64_js_1 = require("5e09a3f4a22d2ce9");
-const utils_js_1 = require("bdaf6874ba6b5ef3");
+const _sha2_js_1 = require("826bdb143ba92c");
+const _u64_js_1 = require("10c9e4a588aab54c");
+const utils_js_1 = require("32f1fda8e16fd6a4");
 // Round contants (first 32 bits of the fractional parts of the cube roots of the first 80 primes 2..409):
 // prettier-ignore
 const [SHA512_Kh, SHA512_Kl] = _u64_js_1.default.split([
@@ -6602,7 +6602,7 @@ exports.sha512_224 = (0, utils_js_1.wrapConstructor)(()=>new SHA512_224());
 exports.sha512_256 = (0, utils_js_1.wrapConstructor)(()=>new SHA512_256());
 exports.sha384 = (0, utils_js_1.wrapConstructor)(()=>new SHA384());
 
-},{"c9d75bdf156cfa5e":"6HKeB","5e09a3f4a22d2ce9":"8TbxJ","bdaf6874ba6b5ef3":"2ehgp"}],"8TbxJ":[function(require,module,exports) {
+},{"826bdb143ba92c":"6HKeB","10c9e4a588aab54c":"8TbxJ","32f1fda8e16fd6a4":"2ehgp"}],"8TbxJ":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -6926,8 +6926,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.ripemd160 = exports.RIPEMD160 = void 0;
-const _sha2_js_1 = require("d99e281eff7597a3");
-const utils_js_1 = require("e41061ad375906d5");
+const _sha2_js_1 = require("6fe203cb2410b3e5");
+const utils_js_1 = require("b56f4c463c6947de");
 // https://homes.esat.kuleuven.be/~bosselae/ripemd160.html
 // https://homes.esat.kuleuven.be/~bosselae/ripemd160/pdf/AB-9601/AB-9601.pdf
 const Rho = new Uint8Array([
@@ -7147,13 +7147,13 @@ exports.RIPEMD160 = RIPEMD160;
  * @param message - msg that would be hashed
  */ exports.ripemd160 = (0, utils_js_1.wrapConstructor)(()=>new RIPEMD160());
 
-},{"d99e281eff7597a3":"6HKeB","e41061ad375906d5":"2ehgp"}],"b3lnM":[function(require,module,exports) {
+},{"6fe203cb2410b3e5":"6HKeB","b56f4c463c6947de":"2ehgp"}],"b3lnM":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.hmac = void 0;
-const utils_js_1 = require("a76fc007b27925f3");
+const utils_js_1 = require("8e9c88ec12e3ef0c");
 // HMAC (RFC 2104)
 class HMAC extends utils_js_1.Hash {
     constructor(hash, _key){
@@ -7222,7 +7222,7 @@ exports.hmac = hmac;
 exports.hmac.create = (hash, key)=>new HMAC(hash, key);
 exports.hmac.init = exports.hmac.create;
 
-},{"a76fc007b27925f3":"4eGYF"}],"45DZp":[function(require,module,exports) {
+},{"8e9c88ec12e3ef0c":"4eGYF"}],"45DZp":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "PRIVATE_KEY_STORAGE_KEY", ()=>PRIVATE_KEY_STORAGE_KEY);
