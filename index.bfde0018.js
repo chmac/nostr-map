@@ -567,6 +567,7 @@ var _notes = require("./nostr/notes");
 var _relays = require("./nostr/relays");
 var _subscribe = require("./nostr/subscribe");
 var _router = require("./router");
+var _constants = require("./constants");
 const map = (0, _leafletDefault.default).map("map").setView([
     51.505,
     -0.09
@@ -578,19 +579,18 @@ const plusCodesWithPopupsAndNotes = {};
 }).addTo(map);
 // NOTE: The leaflet sidepanel plugin doesn't have types in `@types/leaflet` and
 // so we need to cast to any here.
-const PANEL_CONTAINER_ID = "panelID";
-(0, _leafletDefault.default).control.sidepanel(PANEL_CONTAINER_ID, {
+(0, _leafletDefault.default).control.sidepanel((0, _constants.PANEL_CONTAINER_ID), {
     hasTabs: true
 }).addTo(map);
 // The leaflet sidepanel plugin doesn't export an API, so we've written our own
 const hackSidePanelOpen = ()=>{
-    const panel = (0, _leafletDefault.default).DomUtil.get(PANEL_CONTAINER_ID);
+    const panel = (0, _leafletDefault.default).DomUtil.get((0, _constants.PANEL_CONTAINER_ID));
     (0, _leafletDefault.default).DomUtil.removeClass(panel, "closed");
     (0, _leafletDefault.default).DomUtil.addClass(panel, "opened");
 };
 // The leaflet sidepanel plugin doesn't export an API, so we've written our own
 const hackSidePanelClosed = ()=>{
-    const panel = (0, _leafletDefault.default).DomUtil.get(PANEL_CONTAINER_ID);
+    const panel = (0, _leafletDefault.default).DomUtil.get((0, _constants.PANEL_CONTAINER_ID));
     (0, _leafletDefault.default).DomUtil.removeClass(panel, "opened");
     (0, _leafletDefault.default).DomUtil.addClass(panel, "closed");
 };
@@ -606,7 +606,7 @@ map.on("contextmenu", async (event)=>{
         longitude: event.latlng.lng
     };
     const plusCode = (0, _pluscodes.encode)(coords, 6);
-    const viewingCurrentPublicKey = (0, _router.getPublicKeyFromUrl)();
+    const { publicKey: viewingCurrentPublicKey  } = (0, _router.getPublicKeyFromUrl)();
     const myPublicKey = await (0, _keys.getPublicKey)();
     const viewingMyOwnMap = typeof viewingCurrentPublicKey === "undefined" || viewingCurrentPublicKey === myPublicKey;
     const selectedPlusCodePoly = generatePolygonFromPlusCode(plusCode);
@@ -620,11 +620,31 @@ map.on("contextmenu", async (event)=>{
             plusCode
         });
     };
-    const popupContent = viewingMyOwnMap ? createPopupHtml(createNoteCallback) : `View <a href="${(0, _router.getUrlFromPublickey)({
+    const popupContent = viewingMyOwnMap ? createPopupHtml(createNoteCallback) : `View <a href="${(0, _router.getUrlFromPublicKeyAndView)({
         publicKey: myPublicKey
     })}">your own map</a> to add notes.`;
     (0, _leafletDefault.default).popup().setLatLng(event.latlng).setContent(popupContent).openOn(map).on("remove", (e)=>selectedPlusCodePoly.remove());
 });
+function updateUrl() {
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    const view = {
+        lat: center.lat,
+        lng: center.lng,
+        zoom
+    };
+    const { publicKey  } = (0, _router.getPublicKeyFromUrl)();
+    if (!publicKey) return;
+    const yourUrl = (0, _router.getUrlFromPublicKeyAndView)({
+        publicKey,
+        view
+    });
+    const yourUrlHref = globalThis.document.getElementById("yourUrl");
+    yourUrlHref.href = yourUrl;
+    yourUrlHref.innerText = yourUrl;
+}
+map.on("moveend", updateUrl);
+map.on("zoomend", updateUrl);
 function generatePolygonFromPlusCode(plusCode) {
     const decoded = (0, _pluscodes.decode)(plusCode);
     const { resolution: res , longitude: cLong , latitude: cLat  } = decoded;
@@ -704,7 +724,21 @@ function createPopupHtml(createNoteCallback) {
     return popupContainer;
 }
 const mapStartup = async ()=>{
-    const publicKey = (0, _router.getPublicKeyFromUrl)();
+    const { publicKey , view  } = (0, _router.getPublicKeyFromUrl)();
+    if (view) map.setView([
+        view.lat,
+        view.lng
+    ], view.zoom);
+    const badge = (0, _leafletDefault.default).DomUtil.get((0, _constants.BADGE_CONTAINER_ID));
+    if (publicKey) {
+        (0, _leafletDefault.default).DomUtil.addClass(badge, "show");
+        (0, _leafletDefault.default).DomUtil.removeClass(badge, "hide");
+        const publicKeyElement = (0, _leafletDefault.default).DomUtil.get((0, _constants.CURRENT_PUBLIC_KEY_ID));
+        publicKeyElement.innerText = publicKey.substring(0, 5) + "...";
+    } else {
+        (0, _leafletDefault.default).DomUtil.addClass(badge, "hide");
+        (0, _leafletDefault.default).DomUtil.removeClass(badge, "show");
+    }
     await (0, _relays._initRelays)();
     (0, _subscribe.subscribe)({
         publicKey,
@@ -713,7 +747,7 @@ const mapStartup = async ()=>{
 };
 mapStartup();
 
-},{"leaflet":"iFbO2","leaflet.sidepanel":"hLCFx","pluscodes":"3cWkS","./nostr/keys":"bYUmf","./nostr/notes":"hlkir","./nostr/relays":"le10m","./nostr/subscribe":"b20xP","./router":"4QFWt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iFbO2":[function(require,module,exports) {
+},{"leaflet":"iFbO2","leaflet.sidepanel":"hLCFx","pluscodes":"3cWkS","./nostr/keys":"bYUmf","./nostr/notes":"hlkir","./nostr/relays":"le10m","./nostr/subscribe":"b20xP","./router":"4QFWt","./constants":"45DZp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iFbO2":[function(require,module,exports) {
 /* @preserve
  * Leaflet 1.9.3, a JS library for interactive maps. https://leafletjs.com
  * (c) 2010-2022 Vladimir Agafonkin, (c) 2010-2011 CloudMade
@@ -11578,26 +11612,43 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getPublicKeyFromUrl", ()=>getPublicKeyFromUrl);
 parcelHelpers.export(exports, "getUrlFromNpubPublicKey", ()=>getUrlFromNpubPublicKey);
-parcelHelpers.export(exports, "getUrlFromPublickey", ()=>getUrlFromPublickey);
+parcelHelpers.export(exports, "getUrlFromPublicKeyAndView", ()=>getUrlFromPublicKeyAndView);
 var _nostrTools = require("nostr-tools");
 const getPublicKeyFromUrl = ({ location =globalThis.document.location  } = {})=>{
     const { hash  } = location;
-    if (!hash.startsWith("#npub")) return;
-    // NOTE: The hash will include the leading # so we trim off the first character
-    const npubPublicKey = hash.slice(1);
-    const { type , data  } = (0, _nostrTools.nip19).decode(npubPublicKey);
-    if (type !== "npub") return;
-    return data;
+    if (!hash) return {};
+    const params = hash.split("/"); // #/{pubkey}/{zoom}/{lat}/{lng}
+    console.log(hash, params);
+    let publicKey;
+    if (params[1].startsWith("npub")) {
+        const { type , data  } = (0, _nostrTools.nip19).decode(params[1]);
+        if (type === "npub") publicKey = data;
+    }
+    let view;
+    const zoomParam = Number.parseInt(params[2]);
+    const latParam = Number.parseFloat(params[3]);
+    const lngParam = Number.parseFloat(params[4]);
+    if (!Number.isNaN(zoomParam) && zoomParam > 0 && zoomParam < 18 && !Number.isNaN(lngParam) && !Number.isNaN(lngParam)) view = {
+        zoom: zoomParam,
+        lat: latParam,
+        lng: lngParam
+    };
+    return {
+        publicKey,
+        view
+    };
 };
-const getUrlFromNpubPublicKey = ({ npubPublicKey , location =globalThis.document.location  })=>{
+const getUrlFromNpubPublicKey = ({ npubPublicKey , location =globalThis.document.location , view  })=>{
     const { origin , pathname  } = location;
-    const yourUrl = origin + pathname + "#" + npubPublicKey;
+    let yourUrl = origin + pathname + "#/" + npubPublicKey;
+    if (view) yourUrl += `/${view.zoom}/${view.lat}/${view.lng}`;
     return yourUrl;
 };
-const getUrlFromPublickey = ({ publicKey , location =globalThis.document.location  })=>{
+const getUrlFromPublicKeyAndView = ({ publicKey , location =globalThis.document.location , view  })=>{
     const npubPublicKey = (0, _nostrTools.nip19).npubEncode(publicKey);
     const yourUrl = getUrlFromNpubPublicKey({
-        npubPublicKey
+        npubPublicKey,
+        view
     });
     return yourUrl;
 };

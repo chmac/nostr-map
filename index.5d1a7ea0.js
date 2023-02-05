@@ -7230,6 +7230,9 @@ parcelHelpers.export(exports, "RELAYS_STORAGE_KEY", ()=>RELAYS_STORAGE_KEY);
 parcelHelpers.export(exports, "PLUS_CODE_TAG_KEY", ()=>PLUS_CODE_TAG_KEY);
 parcelHelpers.export(exports, "MAP_NOTE_KIND", ()=>MAP_NOTE_KIND);
 parcelHelpers.export(exports, "DEFAULT_RELAYS", ()=>DEFAULT_RELAYS);
+parcelHelpers.export(exports, "PANEL_CONTAINER_ID", ()=>PANEL_CONTAINER_ID);
+parcelHelpers.export(exports, "BADGE_CONTAINER_ID", ()=>BADGE_CONTAINER_ID);
+parcelHelpers.export(exports, "CURRENT_PUBLIC_KEY_ID", ()=>CURRENT_PUBLIC_KEY_ID);
 const PRIVATE_KEY_STORAGE_KEY = "__nostrPrivateKey";
 const RELAYS_STORAGE_KEY = "__nostrRelays";
 const PLUS_CODE_TAG_KEY = "l";
@@ -7239,6 +7242,9 @@ const DEFAULT_RELAYS = [
     "wss://public.nostr.swissrouting.com",
     "wss://nostr.slothy.win"
 ];
+const PANEL_CONTAINER_ID = "panelID";
+const BADGE_CONTAINER_ID = "badge";
+const CURRENT_PUBLIC_KEY_ID = "current_public_key";
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bYUmf":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");

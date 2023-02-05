@@ -564,7 +564,6 @@ var _leaflet = require("leaflet");
 var _nostr = require("./nostr");
 var _keys = require("./nostr/keys");
 var _profiles = require("./nostr/profiles");
-var _router = require("./router");
 const startup = async ()=>{
     const isLoggedIn = await (0, _keys.hasPrivateKey)();
     const loggedIn = _leaflet.DomUtil.get("loggedIn");
@@ -579,12 +578,6 @@ const startup = async ()=>{
         publicKeyCode.innerText = npubPublicKey;
         const nsecPrivateKeyCode = globalThis.document.getElementById("nsecPrivateKey");
         nsecPrivateKeyCode.innerText = nsecPrivateKey;
-        const yourUrl = (0, _router.getUrlFromNpubPublicKey)({
-            npubPublicKey
-        });
-        const yourUrlHref = globalThis.document.getElementById("yourUrl");
-        yourUrlHref.href = yourUrl;
-        yourUrlHref.innerText = yourUrl;
         const profileNameInput = document.getElementById("profile_name");
         const profileAboutInput = document.getElementById("profile_about");
         const profile = await (0, _profiles.subscribeAndGetProfile)({
@@ -677,6 +670,6 @@ const startup = async ()=>{
 };
 startup();
 
-},{"leaflet":"iFbO2","./nostr":"hEBz2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","./router":"4QFWt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
+},{"leaflet":"iFbO2","./nostr":"hEBz2","./nostr/keys":"bYUmf","./nostr/profiles":"2Bolr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4OETO","6M6XM"], "6M6XM", "parcelRequire31ee")
 
 //# sourceMappingURL=index.cf9e30ad.js.map

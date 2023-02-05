@@ -24,4 +24,18 @@ html, body, #map {
   width: 100%;
 }
 
+#badge {
+  max-width: 50vw;
+  text-align: center;
+  z-index: 1000;
+  background-color: red;
+  border-bottom-right-radius: 1em;
+  border-bottom-left-radius: 1em;
+  margin-left: auto;
+  margin-right: auto;
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
 /*# sourceMappingURL=index.2cdaf7bc.css.map */
