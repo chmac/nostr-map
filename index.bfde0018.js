@@ -568,10 +568,15 @@ var _relays = require("./nostr/relays");
 var _subscribe = require("./nostr/subscribe");
 var _router = require("./router");
 var _constants = require("./constants");
-const map = (0, _leafletDefault.default).map("map").setView([
+const map = (0, _leafletDefault.default).map("map", {
+    zoomControl: false
+}).setView([
     51.505,
     -0.09
 ], 11);
+(0, _leafletDefault.default).control.zoom({
+    position: "bottomright"
+}).addTo(map);
 // this lets us add multiple notes to a single area
 const plusCodesWithPopupsAndNotes = {};
 (0, _leafletDefault.default).tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
